@@ -29,6 +29,7 @@ file(GLOB_RECURSE src_files
 add_executable(downloadManagerV2 ${src_files})
 
 target_link_libraries(downloadManagerV2
+        PRIVATE
         sdl::sdl
         CURL::libcurl
         spdlog::spdlog

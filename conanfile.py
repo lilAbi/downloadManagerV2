@@ -13,7 +13,8 @@ class DownloadManager(ConanFile):
         "libcurl/8.20.0",
         "spdlog/1.17.0"
     )
-
+    def configure(self):
+        self.options["sdl"].shared = "True"
     def layout(self):
         cmake_layout(self)
 
