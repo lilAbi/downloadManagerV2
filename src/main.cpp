@@ -1,30 +1,21 @@
-#include <iostream>
-#include <SDL3/SDL.h>
+#include "logger.h"
 #include <SDL3/SDL_main.h>
+#include "window.h"
+#include "application.h"
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
-    SDL_Init(SDL_INIT_VIDEO);
+    Logger* logger = Logger::get();
 
-    SDL_Window* Window{SDL_CreateWindow(
-      "Hello Window", 800, 300, 0
-    )};
+    SDL_SetAppMetadata("downloadManagerV2", "0.1.0", "com.downloadManagerV2");
 
-    SDL_GetWindowSurface(Window);
-    SDL_UpdateWindowSurface(Window);
+    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 
-    bool IsRunning = true;
-    SDL_Event Event;
-    while (IsRunning) {
-        while (SDL_PollEvent(&Event)) {
-            if (Event.type == SDL_EVENT_QUIT) {
-                IsRunning = false;
-            }
-        }
-    }
+    Window window;
 
-    SDL_DestroyWindow(Window);
+    Application application{window};
+
+    application.loop();
+
     SDL_Quit();
-
     return 0;
 }
