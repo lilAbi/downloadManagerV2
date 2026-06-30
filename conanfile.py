@@ -1,5 +1,8 @@
+import os
+
 from conan import ConanFile
-from conan.tools.cmake import cmake_layout, CMakeToolchain, CMakeDeps
+from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps, cmake_layout
+from conan.tools.files import copy
 
 class DownloadManager(ConanFile):
     name = "downloadManagerV2"
@@ -11,16 +14,19 @@ class DownloadManager(ConanFile):
     requires = (
         "sdl/3.4.8",
         "libcurl/8.20.0",
-        "spdlog/1.17.0"
+        "spdlog/1.17.0",
+        "imgui/1.92.8"
     )
     def configure(self):
         self.options["sdl"].shared = "True"
+        self.options["imgui"].with_sdl3_binding = "True"
     def layout(self):
         cmake_layout(self)
 
     def generate(self):
         toolchain = CMakeToolchain(self)
         toolchain.generate()
+        copy(self, "*opengl3*", os.path.join(self.dependencies["imgui"].package_folder, "res", "bindings"), os.path.join(self.source_folder, "bindings"))
 
         dependencies = CMakeDeps(self)
         dependencies.generate()
