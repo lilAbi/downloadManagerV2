@@ -5,9 +5,10 @@
 
 class Application {
 public:
-    explicit Application(Window& window) : m_window(window) {}
+    Application() = default;
+    ~Application();
 
-    ~Application() = default;
+    bool init();
 
     void loop();
 
@@ -16,7 +17,6 @@ private:
 
 private:
     Logger* m_logger{Logger::get()};
-    Window& m_window;
+    Window m_window;
     bool m_is_running = true;
-
 };
