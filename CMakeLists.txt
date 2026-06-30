@@ -19,11 +19,14 @@ set(CMAKE_CXX_MODULE_STD OFF)
 find_package(SDL3)
 find_package(CURL)
 find_package(spdlog)
+find_package(imgui)
 
 file(GLOB_RECURSE src_files
         CONFIGURE_DEPENDS
         "${CMAKE_CURRENT_SOURCE_DIR}/src/*.[hc]"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/*.[hc]pp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/bindings/*.[hc]"
+        "${CMAKE_CURRENT_SOURCE_DIR}/bindings/*.[hc]pp"
 )
 
 add_executable(downloadManagerV2 ${src_files})
@@ -33,6 +36,7 @@ target_link_libraries(downloadManagerV2
         sdl::sdl
         CURL::libcurl
         spdlog::spdlog
+        imgui::imgui
 )
 
 set_target_properties(downloadManagerV2
