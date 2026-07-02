@@ -119,8 +119,8 @@
         "strategy": "external"
       },
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "gcc",
-        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_C_COMPILER": "C:\\msys64\\mingw64\\bin\\gcc.exe",
+        "CMAKE_CXX_COMPILER": "C:\\msys64\\mingw64\\bin\\g++.exe",
         "VCPKG_TARGET_TRIPLET": "x64-mingw-static"
       },
       "condition": {

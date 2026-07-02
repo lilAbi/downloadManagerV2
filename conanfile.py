@@ -20,6 +20,10 @@ class DownloadManager(ConanFile):
     def configure(self):
         self.options["sdl"].shared = "True"
         self.options["imgui"].with_sdl3_binding = "True"
+        if self.settings.os == "Windows":
+            self.options["sdl"].shared = "False"
+            self.options["openssl"].no_apps = "True"
+            self.options["openssl"].no_dgram = "True"
     def layout(self):
         cmake_layout(self)
 

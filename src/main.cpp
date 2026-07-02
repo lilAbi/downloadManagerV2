@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "logger.h"
 #include "application.h"
 
