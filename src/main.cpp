@@ -1,7 +1,6 @@
 #include "logger.h"
 #include "application.h"
 
-
 int main() {
     Logger* logger = Logger::get();
 
