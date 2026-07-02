@@ -31,6 +31,11 @@ file(GLOB_RECURSE src_files
 
 add_executable(downloadManagerV2 ${src_files})
 
+target_include_directories(downloadManagerV2
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/bindings
+)
+
 target_link_libraries(downloadManagerV2
         PRIVATE
         sdl::sdl
