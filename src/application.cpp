@@ -2,7 +2,7 @@
 
 #include <imgui_impl_sdl3.h>
 #include <SDL3/SDL_opengl.h>
-#include "../bindings/imgui_impl_opengl3.h"
+#include <imgui_impl_opengl3.h>
 
 Application::~Application() {
     ImGui_ImplOpenGL3_Shutdown();
@@ -32,6 +32,7 @@ void Application::loop() {
     while (m_is_running) {
         SDL_Event event;
 
+        //process "SDL" events
         while (SDL_PollEvent(&event)) {
             this->handle_sdl_event(event);
         }
@@ -47,11 +48,10 @@ void Application::loop() {
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
+        //Draw UI
+        m_ui.draw();
 
         ImGui::Render();
-
         glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
         glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
         glClear(GL_COLOR_BUFFER_BIT);

@@ -2,6 +2,7 @@
 
 #include "logger.h"
 #include "window.h"
+#include "ui.h"
 
 class Application {
 public:
@@ -17,6 +18,7 @@ private:
 
 private:
     Logger* m_logger{Logger::get()};
-    Window m_window;
-    bool m_is_running = true;
+    Window  m_window;
+    UI      m_ui;
+    bool    m_is_running = true;
 };
