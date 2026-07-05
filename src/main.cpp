@@ -7,20 +7,11 @@
 int main() {
     Logger* logger = Logger::get();
 
-    CURLcode result = curl_global_init(CURL_GLOBAL_DEFAULT);
-
-    if(result != CURLE_OK) {
-        logger->critical("Application start-up failed");
+    if (Application application; application.init()) {
+        application.loop();
     } else {
-        if (Application application; application.init()) {
-            application.loop();
-        } else {
-            logger->critical("Application start-up failed");
-        }
+        logger->critical("Application start-up failed");
     }
-
-
-    curl_global_cleanup();
 
     return 0;
 }
