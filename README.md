@@ -2,6 +2,13 @@
 
 ---
 
+## 0. TODO
+
+* add downloading logic
+* add filesystem navigator
+
+---
+
 ## 1. Objective
 
 Multi-Platform download manager that supports reliable HTTP/HTTPS downloads, pause/resume, progress tracking, using SDL3.
