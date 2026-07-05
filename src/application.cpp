@@ -3,8 +3,10 @@
 #include <imgui_impl_sdl3.h>
 #include <SDL3/SDL_opengl.h>
 #include <imgui_impl_opengl3.h>
+#include <curl/curl.h>
 
 Application::~Application() {
+    curl_global_cleanup();
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
@@ -13,10 +15,15 @@ Application::~Application() {
 }
 
 bool Application::init() {
-    SDL_SetAppMetadata("downloadManagerV2", "0.1.0", "com.downloadManagerV2");
+    if(CURLcode result = curl_global_init(CURL_GLOBAL_DEFAULT); result != CURLE_OK) {
+        m_logger->critical("ERROR: curl_global_init() init failed");
+        return false;
+    }
 
+    //initialize SDL application
+    SDL_SetAppMetadata("downloadManagerV2", "0.1.0", "com.downloadManagerV2");
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD)) {
-        m_logger->info("Error: SDL_Init(): {}", SDL_GetError());
+        m_logger->critical("Error: SDL_Init(): {}", SDL_GetError());
         return false;
     }
 
@@ -49,6 +56,7 @@ void Application::loop() {
         ImGui::NewFrame();
 
         //Draw UI
+        //m_ui.draw(view_model);
         m_ui.draw();
 
         ImGui::Render();
@@ -64,14 +72,17 @@ void Application::loop() {
 void Application::handle_sdl_event(SDL_Event& event) {
     ImGui_ImplSDL3_ProcessEvent(&event); //keep
     if (event.type == SDL_EVENT_MOUSE_MOTION) {
-        m_logger->info("Mouse moved");
+
     } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-        m_logger->info("Mouse clicked");
+
     } else if (event.type == SDL_EVENT_KEY_DOWN) {
-        m_logger->info("Keyboard button pressed");
+
     }
+
+    //close application
     if (event.type == SDL_EVENT_QUIT)
         m_is_running = false;
     if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(m_window.get_sdl_window()))
         m_is_running = false;
+
 }
