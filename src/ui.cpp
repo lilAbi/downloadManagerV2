@@ -6,13 +6,18 @@ void UI::draw() {
     if (m_show_demo_window)
         ImGui::ShowDemoWindow(&m_show_demo_window);
     else {
+        //draw popup windows if enabled
+        //todo: maybe another function to draw popup windows
+        if (m_ui_window_data.m_show_add_download_window) {this->draw_add_download_window();}
 
+        //draw main window
         static ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoResize |
             ImGuiWindowFlags_NoCollapse |
             ImGuiWindowFlags_MenuBar |
             ImGuiWindowFlags_NoTitleBar |
-            ImGuiWindowFlags_NoScrollbar ;
+            ImGuiWindowFlags_NoScrollbar |
+            ImGuiWindowFlags_NoBringToFrontOnFocus;
 
         const ImGuiViewport* viewport = ImGui::GetMainViewport(); //get the full viewport
         ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -46,7 +51,7 @@ void UI::draw() {
 
             //draw "right" panel
             ImGui::BeginChild("DownloadMetadataPanel", ImVec2(0, 0), ImGuiChildFlags_Borders);
-            this->draw_download_metadata_panel();
+            this->draw_download_list_panel();
             ImGui::EndChild();
 
             ImGui::End(); //end of root
@@ -81,7 +86,11 @@ void UI::draw_menu_bar() {
 }
 
 void UI::draw_button_header() {
-    ImGui::Button("Add URL"); ImGui::SameLine();
+    // create a popup window to "add a download" to the queue
+    if (ImGui::Button("Add URL")) {
+        m_ui_window_data.m_show_add_download_window = !m_ui_window_data.m_show_add_download_window;
+    }; ImGui::SameLine();
+
     ImGui::Button("Resume"); ImGui::SameLine();
     ImGui::Button("Stop"); ImGui::SameLine();
     ImGui::Button("Delete"); ImGui::SameLine();
@@ -114,7 +123,7 @@ void UI::draw_filesystem_nav_panel() {
 
 }
 
-void UI::draw_download_metadata_panel() {
+void UI::draw_download_list_panel() {
     ImGui::Text("Download Metadata");
     ImGui::Separator();
 
@@ -125,4 +134,26 @@ void UI::draw_download_metadata_panel() {
     ImGui::Text("ETA: %s", "00:02:31");
 
     ImGui::ProgressBar(0.45f, ImVec2(-1.0f, 0.0f), "45%");
+}
+
+void UI::draw_add_download_window() {
+    const auto total_size = ImGui::GetMainViewport()->WorkSize; //get the full viewport
+    constexpr float window_size_x = 512+128;
+    constexpr float window_size_y = 256+128;
+    ImGui::SetNextWindowSize(ImVec2(window_size_x, window_size_y));
+    ImGui::SetNextWindowPos(ImVec2(
+        total_size.x/2 - window_size_x/2,
+        total_size.y/2 - window_size_y/2
+    ));
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoTitleBar |
+        ImGuiWindowFlags_NoScrollbar;
+    if ( !ImGui::Begin("Add Download", &m_ui_window_data.m_show_add_download_window, flags) ){
+        ImGui::End();
+        return;
+    }
+
+    ImGui::End();
 }

@@ -1,39 +1,19 @@
 #pragma once
 
-// Data to be shared across different functions of the demo.
-struct ImGuiDemoWindowData
-{
-    // Examples Apps (accessible from the "Examples" menu)
-    bool ShowMainMenuBar = false;
-    bool ShowAppAssetsBrowser = false;
-    bool ShowAppConsole = false;
-    bool ShowAppCustomRendering = false;
-    bool ShowAppDocuments = false;
-    bool ShowAppDockSpace = false;
-    bool ShowAppImageViewer = false;
-    bool ShowAppLog = false;
-    bool ShowAppLayout = false;
-    bool ShowAppPropertyEditor = false;
-    bool ShowAppSimpleOverlay = false;
-    bool ShowAppAutoResize = false;
-    bool ShowAppConstrainedResize = false;
-    bool ShowAppFullscreen = false;
-    bool ShowAppLongText = false;
-    bool ShowAppWindowTitles = false;
-
-    // Dear ImGui Tools (accessible from the "Tools" menu)
-    bool ShowMetrics = false;
-    bool ShowDebugLog = false;
-    bool ShowIDStackTool = false;
-    bool ShowStyleEditor = false;
-    bool ShowAbout = false;
-
+//Data to be shared across different functions of the ui manager
+struct UIWindowData {
+    //enable popup windows
+    bool m_show_add_download_window = false;
     // Other data
     bool DisableSections = false;
 };
 
+//Should own the view model
 class UI {
 public:
+    //keeps track of the download state
+    //void draw(view_model model);
+
     void draw();
 
 private:
@@ -43,9 +23,13 @@ private:
 
     void draw_filesystem_nav_panel();
 
-    void draw_download_metadata_panel();
+    void draw_download_list_panel();
 
 private:
-    bool m_show_demo_window = false;
+    void draw_add_download_window();
+
+private:
+    inline static UIWindowData      m_ui_window_data;
+    bool                            m_show_demo_window = false;
 
 };
