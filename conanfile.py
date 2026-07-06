@@ -31,6 +31,6 @@ class DownloadManager(ConanFile):
         toolchain = CMakeToolchain(self)
         toolchain.generate()
         copy(self, "*opengl3*", os.path.join(self.dependencies["imgui"].package_folder, "res", "bindings"), os.path.join(self.source_folder, "bindings"))
-
+        copy(self, "*imgui_stdlib*", os.path.join(self.dependencies["imgui"].package_folder, "res", "misc", "cpp"), os.path.join(self.source_folder, "bindings"))
         dependencies = CMakeDeps(self)
         dependencies.generate()
