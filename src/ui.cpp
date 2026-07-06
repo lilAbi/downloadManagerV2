@@ -1,6 +1,7 @@
 #include "ui.h"
 
 #include <imgui_impl_opengl3.h>
+#include <imgui_stdlib.h>
 
 void UI::draw() {
     if (m_show_demo_window)
@@ -127,6 +128,8 @@ void UI::draw_download_list_panel() {
     ImGui::Text("Download Metadata");
     ImGui::Separator();
 
+    //todo: poll get all downloadids and display snapshot metadata
+
     ImGui::Text("URL: %s", "https://example.com/file.zip");
     ImGui::Text("File: %s", "file.zip");
     ImGui::Text("Status: %s", "Downloading");
@@ -137,22 +140,26 @@ void UI::draw_download_list_panel() {
 }
 
 void UI::draw_add_download_window() {
-    const auto total_size = ImGui::GetMainViewport()->WorkSize; //get the full viewport
-    constexpr float window_size_x = 512+128;
-    constexpr float window_size_y = 256+128;
-    ImGui::SetNextWindowSize(ImVec2(window_size_x, window_size_y));
-    ImGui::SetNextWindowPos(ImVec2(
-        total_size.x/2 - window_size_x/2,
-        total_size.y/2 - window_size_y/2
-    ));
-    ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoCollapse |
-        ImGuiWindowFlags_NoTitleBar |
-        ImGuiWindowFlags_NoScrollbar;
-    if ( !ImGui::Begin("Add Download", &m_ui_window_data.m_show_add_download_window, flags) ){
+    //setup next window properties
+    const auto total_size = ImGui::GetMainViewport()->WorkSize;
+    constexpr float window_size_x = 640;
+    constexpr float window_size_y = 384;
+    ImGui::SetNextWindowSize( ImVec2(window_size_x, window_size_y) );
+    ImGui::SetNextWindowPos( ImVec2(total_size.x/2 - window_size_x/2,total_size.y/2 - window_size_y/2) );
+    constexpr ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove |
+                                       ImGuiWindowFlags_NoResize |
+                                       ImGuiWindowFlags_NoCollapse |
+                                       ImGuiWindowFlags_NoScrollbar;
+    if ( !ImGui::Begin("Scan address to download", &m_ui_window_data.m_show_add_download_window, flags) ){
         ImGui::End();
         return;
+    }
+
+    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Address:"); ImGui::SameLine();
+    ImGui::InputText("##Address", &m_ui_window_data.m_address, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue);  ImGui::SameLine();
+    if ( ImGui::Button("Start", ImVec2(-FLT_MIN,0)) ) {
+        //downloadController()
+        //todo: submit download request
     }
 
     ImGui::End();

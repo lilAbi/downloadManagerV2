@@ -1,11 +1,13 @@
 #pragma once
+#include "logger.h"
 
 //Data to be shared across different functions of the ui manager
 struct UIWindowData {
     //enable popup windows
-    bool m_show_add_download_window = false;
+    bool            m_show_add_download_window = false;
     // Other data
-    bool DisableSections = false;
+    //holds the data for the inputted address string
+    std::string     m_address;
 };
 
 //Should own the view model
@@ -29,6 +31,7 @@ private:
     void draw_add_download_window();
 
 private:
+    Logger*                         m_logger{Logger::get()};
     inline static UIWindowData      m_ui_window_data;
     bool                            m_show_demo_window = false;
 
