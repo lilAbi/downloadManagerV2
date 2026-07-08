@@ -34,6 +34,7 @@ add_executable(downloadManagerV2 ${src_files})
 target_include_directories(downloadManagerV2
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/bindings
+        src
 )
 
 target_link_libraries(downloadManagerV2

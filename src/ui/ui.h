@@ -1,5 +1,5 @@
 #pragma once
-#include "logger.h"
+#include "../core/logger.h"
 
 //Data to be shared across different functions of the ui manager
 struct UIWindowData {
@@ -31,7 +31,7 @@ private:
     void draw_add_download_window();
 
 private:
-    Logger*                         m_logger{Logger::get()};
+    Logger*                         m_logger = &Logger::get();
     inline static UIWindowData      m_ui_window_data;
     bool                            m_show_demo_window = false;
 

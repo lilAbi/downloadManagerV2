@@ -1,11 +1,8 @@
-#include <iostream>
-
-#include "logger.h"
-#include "application.h"
-#include "curl/curl.h"
+#include "core/application.h"
+#include "event/eventManager.h"
 
 int main() {
-    Logger* logger = Logger::get();
+    Logger* logger = &Logger::get();
 
     if (Application application; application.init()) {
         application.loop();

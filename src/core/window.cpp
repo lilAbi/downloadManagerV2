@@ -1,7 +1,7 @@
 #include "window.h"
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
-#include "../bindings/imgui_impl_opengl3.h"
+#include "imgui_impl_opengl3.h"
 
 bool Window::init() {
     //configure opengl version
@@ -20,14 +20,9 @@ bool Window::init() {
 
     //create sdl window context
     const float main_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
-    SDL_Window* sdl_window_ptr{
-        SDL_CreateWindow(
-            "downloadManagerV2",
-            static_cast<int>(1280 * main_scale),
-            static_cast<int>(800 * main_scale),
-            window_flags
-        )
-    };
+    SDL_Window* sdl_window_ptr = SDL_CreateWindow(
+        "downloadManagerV2",static_cast<int>(1280 * main_scale),static_cast<int>(800 * main_scale),window_flags
+    );
     if (!sdl_window_ptr) {
         m_logger->info("Error: SDL_CreateWindow(): {}", SDL_GetError());
         return false;
@@ -41,6 +36,8 @@ bool Window::init() {
     }
     SDL_GL_MakeCurrent(sdl_window_ptr, gl_context_ptr);
     SDL_GL_SetSwapInterval(1); // Enable vsync
+
+    //set window position and open it
     SDL_SetWindowPosition(sdl_window_ptr, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
     SDL_ShowWindow(sdl_window_ptr);
 
@@ -49,7 +46,7 @@ bool Window::init() {
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();

@@ -1,8 +1,10 @@
 #pragma once
 
 #include "logger.h"
+#include "event/eventManager.h"
+#include "download/downloadController.h"
 #include "window.h"
-#include "ui.h"
+#include "ui/ui.h"
 
 class Application {
 public:
@@ -26,9 +28,10 @@ private:
     void handle_sdl_event(SDL_Event& event);
 
 private:
-    //DownloadController downloadController;
-    Logger* m_logger{Logger::get()};
-    Window  m_window;
-    UI      m_ui;
-    bool    m_is_running = true;
+    Logger*             m_logger                = &Logger::get();
+    EventManager*       m_event_manager         = &EventManager::get();
+    DownloadController  m_download_controller;
+    Window              m_window;
+    UI                  m_ui;
+    bool                m_is_running = true;
 };

@@ -36,7 +36,7 @@ public:
     [[nodiscard]] SDL_Surface* get_sdl_surface() const;
 
 private:
-    Logger* m_logger{Logger::get()};
+    Logger* m_logger = &Logger::get();
     std::unique_ptr<SDL_Window, SDLWindowDeleter> m_sdl_window;
     std::unique_ptr<SDL_GLContextState, SDLGlContextDeleter> m_gl_context;
 

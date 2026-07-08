@@ -15,7 +15,7 @@
 class Logger {
     using clock_t = std::chrono::high_resolution_clock;
 public:
-    static Logger* get();
+    static Logger& get();
 
     template <typename... TArgs>
     void info(fmt::format_string<TArgs...> format_str, TArgs&&... args) {
@@ -32,22 +32,23 @@ public:
         m_logger->critical(format_str, std::forward<TArgs>(args)...);
     }
 
+
+    Logger(const Logger&) = delete;
+    Logger(Logger&&) = delete;
+    Logger& operator=(const Logger&) = delete;
+    Logger& operator=(Logger&&) = delete;
+
 private:
-    Logger();
     ~Logger();
+    Logger();
 
     void stop_logging();
 
     void init_loggers();
-
-    Logger(Logger const&)          = delete;
-    void operator=(Logger const&)  = delete;
 
 private:
     std::unique_ptr<spdlog::logger> m_logger{ nullptr };
     std::atomic<bool>               m_stop{ false };
     std::atomic<uint32_t>           m_line_num{ 0 };
     const clock_t::time_point       m_start_time{ clock_t::now() };
-    static inline Logger*           m_static_inst{ nullptr };
-
 };

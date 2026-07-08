@@ -71,18 +71,9 @@ void Application::loop() {
 
 void Application::handle_sdl_event(SDL_Event& event) {
     ImGui_ImplSDL3_ProcessEvent(&event); //keep
-    if (event.type == SDL_EVENT_MOUSE_MOTION) {
-
-    } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-
-    } else if (event.type == SDL_EVENT_KEY_DOWN) {
-
-    }
-
     //close application
     if (event.type == SDL_EVENT_QUIT)
         m_is_running = false;
     if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(m_window.get_sdl_window()))
         m_is_running = false;
-
 }
