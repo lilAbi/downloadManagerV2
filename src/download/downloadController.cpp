@@ -1,6 +1,7 @@
 #include "downloadController.h"
 
 bool DownloadController::init() {
+
     return true;
 }
 

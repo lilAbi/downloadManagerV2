@@ -31,7 +31,7 @@ public:
 
 public:
     bool init();
-    [[nodiscard]] inline SDL_Window* get_sdl_window() const;
+    [[nodiscard]] SDL_Window* get_sdl_window() const;
     [[nodiscard]] SDL_GLContext get_sdl_gl_context() const;
     [[nodiscard]] SDL_Surface* get_sdl_surface() const;
 

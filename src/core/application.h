@@ -33,5 +33,5 @@ private:
     DownloadController  m_download_controller;
     Window              m_window;
     UI                  m_ui;
-    bool                m_is_running = true;
+    bool                m_is_running            = true;
 };

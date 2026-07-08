@@ -1,6 +1,6 @@
 #pragma once
 
-class Event {
+struct Event {
 protected:
     virtual ~Event() = default;
 };
