@@ -50,12 +50,12 @@ bool EventManager::publish(std::shared_ptr<EventType> event) {
 }
 
 template<typename T, typename EventType>
-void EventManager::subscribe(T *instance, void(T::*OnEventMemberFunction)(std::shared_ptr<EventType> event)) {
+void EventManager::subscribe(T* instance, void(T::*OnEventMemberFunction)(std::shared_ptr<EventType> event)) {
     const std::type_index id = typeid(EventType);
     //check if EventType has an existing EventHandlerVector
     if ( !m_subscribers.contains(id) ) {
         m_subscribers[id] = std::make_shared<EventHandlerVector>(); //create it
     }
     //"subscribe" a callback to be called when an event fires
-    m_subscribers[id]->push_back( std::make_shared< MemberFunctionEventHandler<T,EventType>>(instance, OnEventMemberFunction) );
+    m_subscribers[id]->push_back( std::make_shared< MemberFunctionEventHandler<T,EventType> >(instance, OnEventMemberFunction) );
 }
