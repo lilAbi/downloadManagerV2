@@ -29,6 +29,8 @@ bool Application::init() {
 
     m_window.init();
 
+    m_download_controller.init();
+
     return true;
 }
 
