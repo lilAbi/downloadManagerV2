@@ -15,8 +15,8 @@ public:
     bool publish(std::shared_ptr<EventType> event);
 
      //register callback functions to be used for fired event
-     template<typename T, typename EventType>
-     void subscribe(T* instance, void (T::*OnEventMemberFunction)(std::shared_ptr<EventType> event));
+    template<typename T, typename EventType>
+    void subscribe(T* instance, void (T::*OnEventMemberFunction)(std::shared_ptr<EventType> event));
 
      //remove copy/move constructor/assignment operators
      EventManager(const EventManager&) = delete;

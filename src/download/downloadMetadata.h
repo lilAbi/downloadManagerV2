@@ -20,7 +20,7 @@ enum class DownloadState {
 struct DownloadSpec {
     //todo: should be something like DownloadType source; where "DownloadType" represents the type of protocol download
     std::string             m_url;
-    std::filesystem::path    m_downloaded_path;
+    //std::filesystem::path   m_downloaded_path;
     int                     m_user_priority;
     bool                    m_allow_parrel_download;
 };
