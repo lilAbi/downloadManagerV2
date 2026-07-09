@@ -1,5 +1,6 @@
 #pragma once
-#include "../core/logger.h"
+#include "core/logger.h"
+#include "event/eventManager.h"
 
 //Data to be shared across different functions of the ui manager
 struct UIWindowData {
@@ -31,8 +32,9 @@ private:
     void draw_add_download_window();
 
 private:
-    Logger*                         m_logger = &Logger::get();
     inline static UIWindowData      m_ui_window_data;
+    Logger*                         m_logger = &Logger::get();
+    EventManager*                   m_event_manager = &EventManager::get();
     bool                            m_show_demo_window = false;
 
 };

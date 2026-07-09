@@ -1,7 +1,9 @@
 #include "ui.h"
 
+#include "download/downloadControllerEvents.h"
 #include <imgui_impl_opengl3.h>
 #include <imgui_stdlib.h>
+
 
 void UI::draw() {
     if (m_show_demo_window)
@@ -158,8 +160,13 @@ void UI::draw_add_download_window() {
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Address:"); ImGui::SameLine();
     ImGui::InputText("##Address", &m_ui_window_data.m_address, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue);  ImGui::SameLine();
     if ( ImGui::Button("Start", ImVec2(-FLT_MIN,0)) ) {
-        //downloadController()
-        //todo: submit download request
+        //submit DownloadSubmitEvent
+        if (!m_ui_window_data.m_address.empty()) {
+            m_event_manager->publish(std::make_shared<DownloadSubmitEvent>(
+                DownloadSpec{m_ui_window_data.m_address, 1, true}
+            ));
+            m_ui_window_data.m_address.clear();
+        }
     }
 
     ImGui::End();
