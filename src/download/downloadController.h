@@ -1,5 +1,8 @@
 #pragma once
 #include "downloadMetadata.h"
+#include "downloadControllerEvents.h"
+#include "core/logger.h"
+
 
 class DownloadController {
 public:
@@ -20,6 +23,10 @@ public:
     DownloadController(DownloadController&&) = delete;
     DownloadController& operator=(const DownloadController&) = delete;
     DownloadController& operator=(DownloadController&&) = delete;
-private:
 
+private:
+    void on_download_submit_event(std::shared_ptr<DownloadSubmitEvent> event);
+
+private:
+    Logger*                         m_logger = &Logger::get();
 };
