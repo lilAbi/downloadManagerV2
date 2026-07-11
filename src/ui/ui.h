@@ -20,6 +20,8 @@ public:
     void draw();
 
 private:
+    void draw_pop_up_window();
+
     void draw_menu_bar();
 
     void draw_button_header();
@@ -27,6 +29,7 @@ private:
     void draw_filesystem_nav_panel();
 
     void draw_download_list_panel();
+
 
 private:
     void draw_add_download_window();

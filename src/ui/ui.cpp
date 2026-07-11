@@ -6,61 +6,61 @@
 
 
 void UI::draw() {
-    if (m_show_demo_window)
-        ImGui::ShowDemoWindow(&m_show_demo_window);
-    else {
-        //draw popup windows if enabled
-        //todo: maybe another function to draw popup windows
-        if (m_ui_window_data.m_show_add_download_window) {this->draw_add_download_window();}
+    //draw enabled pop up window
+    this->draw_pop_up_window();
 
-        //draw main window
-        static ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove |
-            ImGuiWindowFlags_NoResize |
-            ImGuiWindowFlags_NoCollapse |
-            ImGuiWindowFlags_MenuBar |
-            ImGuiWindowFlags_NoTitleBar |
-            ImGuiWindowFlags_NoScrollbar |
-            ImGuiWindowFlags_NoBringToFrontOnFocus;
+    //draw main window
+    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_MenuBar |
+        ImGuiWindowFlags_NoTitleBar |
+        ImGuiWindowFlags_NoScrollbar |
+        ImGuiWindowFlags_NoBringToFrontOnFocus;
 
-        const ImGuiViewport* viewport = ImGui::GetMainViewport(); //get the full viewport
-        ImGui::SetNextWindowPos(viewport->WorkPos);
-        ImGui::SetNextWindowSize(viewport->WorkSize);
+    //set the next window size to the total viewport area
+    const ImGuiViewport* viewport = ImGui::GetMainViewport(); //get the full viewport
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
 
-        //draw initial root window
-        if (ImGui::Begin("Root", nullptr, flags)) {
+    //draw initial root window
+    if (ImGui::Begin("Root", nullptr, flags)) {
 
-            //draw menu bar
-            this->draw_menu_bar();
-            ImGui::Separator();
+        //draw menu bar
+        this->draw_menu_bar();
+        ImGui::Separator();
 
-            //draw button header
-            this->draw_button_header();
-            ImGui::Separator();
+        //draw button header
+        this->draw_button_header();
+        ImGui::Separator();
 
-            ImGui::Text("dear imgui says hello! (%s) (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM);
-            ImGui::Spacing();
+        ImGui::Text("dear imgui says hello! (%s) (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM);
+        ImGui::Spacing();
 
-            const ImVec2 available_region = ImGui::GetContentRegionAvail();
+        const ImVec2 available_region = ImGui::GetContentRegionAvail();
 
-            //draw "left" panel
-            ImGui::BeginChild("FilesystemNavigatorPanel",ImVec2(280.0f, 0.0f), ImGuiChildFlags_Borders);
-            this->draw_filesystem_nav_panel();
-            ImGui::EndChild();
+        //draw "left" panel
+        ImGui::BeginChild("FilesystemNavigatorPanel",ImVec2(280.0f, 0.0f), ImGuiChildFlags_Borders);
+        this->draw_filesystem_nav_panel();
+        ImGui::EndChild();
 
-            //draw button as slider
-            ImGui::SameLine();
-            ImGui::Button("##VerticalSplitter", ImVec2(6.0f, available_region.y));
-            ImGui::SameLine();
+        //draw button as slider
+        ImGui::SameLine();
+        ImGui::Button("##VerticalSplitter", ImVec2(6.0f, available_region.y));
+        ImGui::SameLine();
 
-            //draw "right" panel
-            ImGui::BeginChild("DownloadMetadataPanel", ImVec2(0, 0), ImGuiChildFlags_Borders);
-            this->draw_download_list_panel();
-            ImGui::EndChild();
+        //draw "right" panel
+        ImGui::BeginChild("DownloadMetadataPanel", ImVec2(0, 0), ImGuiChildFlags_Borders);
+        this->draw_download_list_panel();
+        ImGui::EndChild();
 
-            ImGui::End(); //end of root
-        }
-
+        ImGui::End(); //end of root
     }
+}
+
+void UI::draw_pop_up_window() {
+    //draw "add download"
+    if ( m_ui_window_data.m_show_add_download_window ) { this->draw_add_download_window(); }
 }
 
 void UI::draw_menu_bar() {
