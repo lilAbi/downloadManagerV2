@@ -28,5 +28,5 @@ private:
     void on_download_submit_event(std::shared_ptr<DownloadSubmitEvent> event);
 
 private:
-    Logger*                         m_logger = &Logger::get();
+    Logger* m_logger = &Logger::get();
 };

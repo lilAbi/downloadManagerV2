@@ -15,15 +15,20 @@ class Downloader {
 public:
     Downloader() = default;
     ~Downloader() = default;
-    
+
+    void operator()() const {
+        std::cout << "Downloading: " << url_ << '\n';
+    }
+
+    /*
     //delete copy/move assignment/constructors
     Downloader(const Downloader&) = delete;
     Downloader(Downloader&&) = delete;
     Downloader& operator=(const Downloader&) = delete;
     Downloader& operator=(Downloader&&) = delete;
+    */
 
 private:
-
 
 };
 
