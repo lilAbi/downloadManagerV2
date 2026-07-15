@@ -15,7 +15,7 @@ Application::~Application() {
 }
 
 bool Application::init() {
-    if(CURLcode result = curl_global_init(CURL_GLOBAL_DEFAULT); result != CURLE_OK) {
+    if(const CURLcode result = curl_global_init(CURL_GLOBAL_DEFAULT); result != CURLE_OK) {
         m_logger->critical("ERROR: curl_global_init() init failed");
         return false;
     }
