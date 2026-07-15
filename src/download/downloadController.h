@@ -1,7 +1,12 @@
 #pragma once
+
 #include "downloadMetadata.h"
 #include "downloadControllerEvents.h"
+#include "downloadCommand.h"
+
 #include "core/logger.h"
+
+#include <boost/lockfree/queue.hpp>
 
 
 class DownloadController {
@@ -16,6 +21,7 @@ public:
     void pause(int download_id);
     void resume(int download_id);
     void cancel(int download_id);
+    //delete?
     DownloadSnapshot get_snapshot(int download_id);
 
     //delete copy/move assignment/constructors
@@ -28,5 +34,15 @@ private:
     void on_download_submit_event(std::shared_ptr<DownloadSubmitEvent> event);
 
 private:
-    Logger* m_logger = &Logger::get();
+    //Logger
+    Logger*                             m_logger = &Logger::get();
+
+    //shared event queue to be passed to thread
+    boost::lockfree::queue< Command >   m_command_queue{8};
+
+    //keep track of all transfers that occurred during the session
+    std::flat_map<int, DownloadSpec>    m_transfers;
+
+    //UUID tracker
+    inline static int                   m_download_id_counter = 0;
 };
