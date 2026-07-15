@@ -20,6 +20,8 @@ find_package(SDL3)
 find_package(CURL)
 find_package(spdlog)
 find_package(imgui)
+find_package(Boost)
+
 
 file(GLOB_RECURSE src_files
         CONFIGURE_DEPENDS
@@ -43,6 +45,7 @@ target_link_libraries(downloadManagerV2
         CURL::libcurl
         spdlog::spdlog
         imgui::imgui
+        boost::boost
 )
 
 set_target_properties(downloadManagerV2

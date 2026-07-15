@@ -15,15 +15,16 @@ class DownloadManager(ConanFile):
         "sdl/3.4.8",
         "libcurl/8.20.0",
         "spdlog/1.17.0",
-        "imgui/1.92.8"
+        "imgui/1.92.8",
+        "boost/1.91.0"
     )
     def configure(self):
-        self.options["sdl"].shared = "True"
-        self.options["imgui"].with_sdl3_binding = "True"
         if self.settings.os == "Windows":
             self.options["sdl"].shared = "False"
-            self.options["openssl"].no_apps = "True"
-            self.options["openssl"].no_dgram = "True"
+        else:
+            self.options["boost"].without_cobalt = "True"
+            self.options["imgui"].with_sdl3_binding = "True"
+            self.options["sdl"].shared = "True"
     def layout(self):
         cmake_layout(self)
 
