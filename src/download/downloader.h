@@ -1,5 +1,6 @@
 #pragma once
 
+#include <thread>
 //this should one be passed to a thread
 
 /*
@@ -7,18 +8,18 @@
  *  contains the download metadata
  *  stored in a vector
  *
+ *  use an event queue to communicate between DownloadController and thread for new task or pauses/cancels
+ *
  */
 
-#include <thread>
 
 class Downloader {
 public:
     Downloader() = default;
     ~Downloader() = default;
 
-    void operator()() const {
-        std::cout << "Downloading: " << url_ << '\n';
-    }
+    void operator()(std::stop_token stop_token) const;
+
 
     /*
     //delete copy/move assignment/constructors
@@ -29,6 +30,8 @@ public:
     */
 
 private:
+
+    //shared event queue
 
 };
 
