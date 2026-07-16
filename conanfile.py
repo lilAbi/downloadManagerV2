@@ -19,11 +19,11 @@ class DownloadManager(ConanFile):
         "boost/1.91.0"
     )
     def configure(self):
+        self.options["imgui"].with_sdl3_binding = "True"
         if self.settings.os == "Windows":
             self.options["sdl"].shared = "False"
         else:
             self.options["boost"].without_cobalt = "True"
-            self.options["imgui"].with_sdl3_binding = "True"
             self.options["sdl"].shared = "True"
     def layout(self):
         cmake_layout(self)
