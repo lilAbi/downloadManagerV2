@@ -2,7 +2,6 @@
 
 #include "downloadMetadata.h"
 #include "downloadControllerEvents.h"
-#include "downloadCommand.h"
 
 #include "core/logger.h"
 
