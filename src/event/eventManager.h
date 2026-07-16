@@ -43,7 +43,8 @@ private:
 template<typename EventType>
 requires std::derived_from<EventType, Event>
 bool EventManager::publish(std::shared_ptr<EventType> event) {
-    std::lock_guard guard{m_mutex}; //prevent other threads from publishing multiple messages
+    //prevent other threads from publishing multiple messages
+    std::lock_guard guard{m_mutex};
     //check if EventType has an existing EventHandlerVector
     if ( const std::type_index id = typeid(EventType); m_subscribers.contains(id) ) {
         //iterate through all the event handlers and handle the event
@@ -60,7 +61,8 @@ bool EventManager::publish(std::shared_ptr<EventType> event) {
 template<typename T, typename EventType>
 requires std::derived_from<EventType, Event>
 void EventManager::subscribe(T* instance, void(T::*OnEventMemberFunction)(std::shared_ptr<EventType> event)) {
-    std::lock_guard guard{m_mutex}; //prevent other threads from subscribing multiple
+    //prevent other threads from subscribing multiple
+    std::lock_guard guard{m_mutex};
     const std::type_index id = typeid(EventType);
     //check if EventType has an existing EventHandlerVector
     if ( !m_subscribers.contains(id) ) {
