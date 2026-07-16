@@ -66,6 +66,7 @@ bool Window::init() {
     m_gl_context.reset(gl_context_ptr);
     m_sdl_window.reset(sdl_window_ptr);
 
+    m_logger->info("Window Initialized");
     return true;
 }
 

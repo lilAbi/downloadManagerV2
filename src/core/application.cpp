@@ -19,6 +19,7 @@ bool Application::init() {
         m_logger->critical("ERROR: curl_global_init() init failed");
         return false;
     }
+    m_logger->info("CURL Initialized");
 
     //initialize SDL application
     SDL_SetAppMetadata("downloadManagerV2", "0.1.0", "com.downloadManagerV2");
@@ -26,10 +27,15 @@ bool Application::init() {
         m_logger->critical("Error: SDL_Init(): {}", SDL_GetError());
         return false;
     }
+    m_logger->info("SDL Initialized");
 
-    m_window.init();
+    if (!m_window.init()) {
+        m_logger->critical("Error: Window did not initalize");
+    }
 
-    m_download_controller.init();
+    if (!m_download_controller.init()) {
+        m_logger->critical("Error: DownloadController did not initalize");
+    }
 
     return true;
 }
