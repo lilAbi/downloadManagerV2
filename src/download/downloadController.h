@@ -16,7 +16,7 @@ public:
     //initialize the subsystems
     bool init();
 
-    int submit(DownloadSpec download_spec);
+    int submit(DownloadSpecification download_spec);
     void pause(int download_id);
     void resume(int download_id);
     void cancel(int download_id);
@@ -33,15 +33,12 @@ private:
     void on_download_submit_event(std::shared_ptr<DownloadSubmitEvent> event);
 
 private:
-    //Logger
-    Logger*                             m_logger = &Logger::get();
-
-    //shared event queue to be passed to thread
-    boost::lockfree::queue< Command >   m_command_queue{8};
-
-    //keep track of all transfers that occurred during the session
-    std::flat_map<int, DownloadSpec>    m_transfers;
-
     //UUID tracker
-    inline static int                   m_download_id_counter = 0;
+    inline static int                           m_download_id_counter = 0;
+    //Logger
+    Logger*                                     m_logger = &Logger::get();
+    //shared event queue to be passed to thread
+    boost::lockfree::queue< Command >           m_command_queue{0};
+    //keep track of all transfers that occurred during the lifetime of application
+    std::flat_map<int, DownloadSpecification>   m_transfers;
 };

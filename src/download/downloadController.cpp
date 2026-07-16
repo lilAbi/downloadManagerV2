@@ -6,10 +6,13 @@ bool DownloadController::init() {
     EventManager& event_manager = EventManager::get();
     event_manager.subscribe(this, &DownloadController::on_download_submit_event);
 
+    //star downloader thread
+
+    m_logger->info("DownloadController Initialized");
     return true;
 }
 
-int DownloadController::submit(DownloadSpec download_spec) {
+int DownloadController::submit(DownloadSpecification download_spec) {
     //create new uuid for download
     const int new_download_id = DownloadController::m_download_id_counter++;
     //add it to the transfer list
@@ -41,12 +44,13 @@ void DownloadController::on_download_submit_event(std::shared_ptr<DownloadSubmit
     m_logger->info("DownloadSubmitEvent has been called");
     m_logger->info("Download Source: {}", event->m_source);
     m_logger->info("Downloaded Path: {}", event->m_downloaded_path.generic_string());
-    //submit event
+    //create a new DownloadSpecification obj from incoming event and pass it to be submitted
     this->submit(
-        DownloadSpec{
+        DownloadSpecification{
             std::move(event->m_source),
             std::move(event->m_downloaded_path),
-            nullptr
+            nullptr,
+            DownloadState::CREATED
         }
     );
 }

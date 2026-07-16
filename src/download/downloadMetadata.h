@@ -32,10 +32,11 @@ struct Command {
 };
 
 
-struct DownloadSpec {
+struct DownloadSpecification {
     std::string             m_source;
     std::filesystem::path   m_downloaded_path;
     CURL*                   m_handle{nullptr};
+    DownloadState           m_download_state{DownloadState::ERROR};
 };
 
 struct DownloadSnapshot {

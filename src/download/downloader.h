@@ -1,8 +1,12 @@
 #pragma once
 
-#include <thread>
-//this should one be passed to a thread
+#include "downloadMetadata.h"
+#include "core/logger.h"
+#include <curl/multi.h>
+#include <flat_map>
+#include <boost/lockfree/queue.hpp>
 
+//this should one be passed to a thread
 /*
  *  ideally this would be a function object that i can pass to a thread
  *  contains the download metadata
@@ -12,14 +16,22 @@
  *
  */
 
-
 class Downloader {
 public:
-    Downloader() = default;
-    ~Downloader() = default;
+    Downloader() = delete;
+    Downloader(boost::lockfree::queue<Command>& queue, std::flat_map<int, DownloadSpecification>& transfers);
+    ~Downloader();
 
-    void operator()(std::stop_token stop_token) const;
+    //function that the thread obj should run
+    void operator()(std::stop_token stop_token);
 
+private:
+
+    void process_command_queue();
+
+    void process_completions();
+
+    void cleanup_active_downloads();
 
     /*
     //delete copy/move assignment/constructors
@@ -30,9 +42,13 @@ public:
     */
 
 private:
-
-    //shared event queue
-
+    Logger&                                     m_logger = Logger::get();
+    //shared event queue to be passed to thread
+    boost::lockfree::queue<Command>&            m_command_queue;
+    //keep track of all transfers that occurred during the lifetime of application
+    std::flat_map<int, DownloadSpecification>&  m_transfers;
+    //handle to curls multi interface
+    CURLM*                                      m_multi_handle = nullptr;
 };
 
 
