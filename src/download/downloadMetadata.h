@@ -2,6 +2,7 @@
 
 #include <string>
 #include <filesystem>
+#include <curl/curl.h>
 
 enum class DownloadState {
     ERROR = 0,
@@ -17,12 +18,24 @@ enum class DownloadState {
     CANCELED
 };
 
+enum class DownloadCommand {
+    ERROR = 0,
+    SUBMIT,
+    PAUSE,
+    RESUME,
+    CANCEL
+};
+
+struct Command {
+    DownloadCommand m_download_command{DownloadCommand::ERROR};
+    int             m_id{};
+};
+
+
 struct DownloadSpec {
-    //todo: should be something like DownloadType source; where "DownloadType" represents the type of protocol download
-    std::string             m_url;
-    //std::filesystem::path   m_downloaded_path;
-    int                     m_user_priority;
-    bool                    m_allow_parrel_download;
+    std::string             m_source;
+    std::filesystem::path   m_downloaded_path;
+    CURL*                   m_handle{nullptr};
 };
 
 struct DownloadSnapshot {
