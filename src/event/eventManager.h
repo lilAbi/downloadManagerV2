@@ -1,7 +1,9 @@
 #pragma once
+
 #include "core/logger.h"
 #include "eventHandler.h"
 
+#include <mutex>
 #include <typeindex>
 
 //Queue events and dispatch them
@@ -12,10 +14,12 @@ public:
 
     //fire off an event
     template<typename EventType>
+    requires std::derived_from<EventType, Event>
     bool publish(std::shared_ptr<EventType> event);
 
      //register callback functions to be used for fired event
     template<typename T, typename EventType>
+    requires std::derived_from<EventType, Event>
     void subscribe(T* instance, void (T::*OnEventMemberFunction)(std::shared_ptr<EventType> event));
 
      //remove copy/move constructor/assignment operators
@@ -30,12 +34,16 @@ private:
 
 private:
     Logger*                     m_logger = &Logger::get();
+    //mutex to lock when adding a new subscriber
+    mutable std::mutex          m_mutex;
     //each key in the map is an "Event Type" that has a value of a vector of subscribed "Event Handlers (callback functions)"
     std::flat_map< std::type_index, std::shared_ptr<EventHandlerVector> > m_subscribers;
 };
 
 template<typename EventType>
+requires std::derived_from<EventType, Event>
 bool EventManager::publish(std::shared_ptr<EventType> event) {
+    std::lock_guard guard{m_mutex}; //prevent other threads from publishing multiple messages
     //check if EventType has an existing EventHandlerVector
     if ( const std::type_index id = typeid(EventType); m_subscribers.contains(id) ) {
         //iterate through all the event handlers and handle the event
@@ -50,7 +58,9 @@ bool EventManager::publish(std::shared_ptr<EventType> event) {
 }
 
 template<typename T, typename EventType>
+requires std::derived_from<EventType, Event>
 void EventManager::subscribe(T* instance, void(T::*OnEventMemberFunction)(std::shared_ptr<EventType> event)) {
+    std::lock_guard guard{m_mutex}; //prevent other threads from subscribing multiple
     const std::type_index id = typeid(EventType);
     //check if EventType has an existing EventHandlerVector
     if ( !m_subscribers.contains(id) ) {

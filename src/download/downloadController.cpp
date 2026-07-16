@@ -3,9 +3,8 @@
 #include "event/eventManager.h"
 
 bool DownloadController::init() {
-    EventManager* event_manager = &EventManager::get();
-
-    event_manager->subscribe(this, &DownloadController::on_download_submit_event);
+    EventManager& event_manager = EventManager::get();
+    event_manager.subscribe(this, &DownloadController::on_download_submit_event);
 
     return true;
 }
