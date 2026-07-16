@@ -60,7 +60,7 @@ void UI::draw() {
 
 void UI::draw_pop_up_window() {
     //draw "add download"
-    if ( m_ui_window_data.m_show_add_download_window ) { this->draw_add_download_window(); }
+    if ( m_shared_ui_window_data.m_show_add_download_window ) { this->draw_add_download_window(); }
 }
 
 void UI::draw_menu_bar() {
@@ -91,7 +91,7 @@ void UI::draw_menu_bar() {
 void UI::draw_button_header() {
     // create a popup window to "add a download" to the queue
     if (ImGui::Button("Add URL")) {
-        m_ui_window_data.m_show_add_download_window = !m_ui_window_data.m_show_add_download_window;
+        m_shared_ui_window_data.m_show_add_download_window = !m_shared_ui_window_data.m_show_add_download_window;
     }; ImGui::SameLine();
 
     ImGui::Button("Resume"); ImGui::SameLine();
@@ -142,7 +142,7 @@ void UI::draw_download_list_panel() {
 }
 
 void UI::draw_add_download_window() {
-    //setup next window properties
+    //setup popup window properties
     const auto total_size = ImGui::GetMainViewport()->WorkSize;
     constexpr float window_size_x = 640;
     constexpr float window_size_y = 384;
@@ -152,20 +152,22 @@ void UI::draw_add_download_window() {
                                        ImGuiWindowFlags_NoResize |
                                        ImGuiWindowFlags_NoCollapse |
                                        ImGuiWindowFlags_NoScrollbar;
-    if ( !ImGui::Begin("Scan address to download", &m_ui_window_data.m_show_add_download_window, flags) ){
+    if ( !ImGui::Begin("Scan address to download", &m_shared_ui_window_data.m_show_add_download_window, flags) ){
         ImGui::End();
         return;
     }
-
+    //draw "Address:" label
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Address:"); ImGui::SameLine();
-    ImGui::InputText("##Address", &m_ui_window_data.m_address, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue);  ImGui::SameLine();
+    //draw input text line
+    ImGui::InputText("##Address", &m_shared_ui_window_data.m_source, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue);  ImGui::SameLine();
     if ( ImGui::Button("Start", ImVec2(-FLT_MIN,0)) ) {
-        //submit DownloadSubmitEvent
-        if (!m_ui_window_data.m_address.empty()) {
+        //submit a DownloadSubmit event
+        if (!m_shared_ui_window_data.m_source.empty()) {
             m_event_manager->publish(std::make_shared<DownloadSubmitEvent>(
-                DownloadSpec{m_ui_window_data.m_address, 1, true}
+                std::move(m_shared_ui_window_data.m_source),
+                "~/Downloads/"
             ));
-            m_ui_window_data.m_address.clear();
+            m_shared_ui_window_data.m_source.clear();
         }
     }
 

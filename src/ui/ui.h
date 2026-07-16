@@ -8,7 +8,7 @@ struct UIWindowData {
     bool            m_show_add_download_window = false;
     // Other data
     //holds the data for the inputted address string
-    std::string     m_address;
+    std::string     m_source;
 };
 
 //Should own the view model
@@ -35,7 +35,7 @@ private:
     void draw_add_download_window();
 
 private:
-    inline static UIWindowData      m_ui_window_data;
+    inline static UIWindowData      m_shared_ui_window_data;
     Logger*                         m_logger = &Logger::get();
     EventManager*                   m_event_manager = &EventManager::get();
     bool                            m_show_demo_window = false;
