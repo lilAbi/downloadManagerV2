@@ -19,7 +19,7 @@ bool Application::init() {
         m_logger->critical("ERROR: curl_global_init() init failed");
         return false;
     }
-    m_logger->info("CURL Initialized");
+    m_logger->trace("CURL Initialized");
 
     //initialize SDL application
     SDL_SetAppMetadata("downloadManagerV2", "0.1.0", "com.downloadManagerV2");
@@ -27,21 +27,21 @@ bool Application::init() {
         m_logger->critical("Error: SDL_Init(): {}", SDL_GetError());
         return false;
     }
-    m_logger->info("SDL Initialized");
+    m_logger->trace("SDL Initialized");
 
     if (!m_window.init()) {
-        m_logger->critical("Error: Window did not initalize");
+        m_logger->critical("Error: Window did not initialize");
     }
 
     if (!m_download_controller.init()) {
-        m_logger->critical("Error: DownloadController did not initalize");
+        m_logger->critical("Error: DownloadController did not initialize");
     }
 
     return true;
 }
 
 void Application::loop() {
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    const ImGuiIO& io = ImGui::GetIO(); (void)io;
 
     bool show_demo_window = true;
     while (m_is_running) {
@@ -52,7 +52,7 @@ void Application::loop() {
             this->handle_sdl_event(event);
         }
 
-        // [If using SDL_MAIN_USE_CALLBACKS: all code below would likely be your SDL_AppIterate() function]
+        //if window is minimized put app to sleep
         if (SDL_GetWindowFlags(m_window.get_sdl_window()) & SDL_WINDOW_MINIMIZED) {
             SDL_Delay(10);
             continue;
@@ -68,7 +68,7 @@ void Application::loop() {
         m_ui.draw();
 
         ImGui::Render();
-        glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+        glViewport(0, 0, static_cast<int>(io.DisplaySize.x), static_cast<int>(io.DisplaySize.y));
         glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -77,11 +77,18 @@ void Application::loop() {
 
 }
 
-void Application::handle_sdl_event(SDL_Event& event) {
+void Application::handle_sdl_event(const SDL_Event& event) {
     ImGui_ImplSDL3_ProcessEvent(&event); //keep
     //close application
-    if (event.type == SDL_EVENT_QUIT)
-        m_is_running = false;
-    if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(m_window.get_sdl_window()))
-        m_is_running = false;
+    {   //todo: when window is closed both of these events are processed before app closes
+        if (event.type == SDL_EVENT_QUIT) {
+            m_logger->info("SDL_EVENT_QUIT called");
+            m_is_running = false;
+        }
+        if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(m_window.get_sdl_window())) {
+            m_logger->info("SDL_EVENT_WINDOW_CLOSE_REQUESTED called");
+            m_event_manager->publish(std::make_shared<StopDownloaderThreadEvent>());
+            m_is_running = false;
+        }
+    }
 }

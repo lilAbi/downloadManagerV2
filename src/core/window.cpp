@@ -24,14 +24,14 @@ bool Window::init() {
         "downloadManagerV2",static_cast<int>(1280 * main_scale),static_cast<int>(800 * main_scale),window_flags
     );
     if (!sdl_window_ptr) {
-        m_logger->info("Error: SDL_CreateWindow(): {}", SDL_GetError());
+        m_logger->critical("Error: SDL_CreateWindow(): {}", SDL_GetError());
         return false;
     }
 
     //create opengl graphics context
     SDL_GLContext gl_context_ptr = SDL_GL_CreateContext(sdl_window_ptr);
     if (!gl_context_ptr) {
-        m_logger->info("Error: SDL_GL_CreateContext(): {}", SDL_GetError());
+        m_logger->critical("Error: SDL_GL_CreateContext(): {}", SDL_GetError());
         return false;
     }
     SDL_GL_MakeCurrent(sdl_window_ptr, gl_context_ptr);
@@ -66,7 +66,7 @@ bool Window::init() {
     m_gl_context.reset(gl_context_ptr);
     m_sdl_window.reset(sdl_window_ptr);
 
-    m_logger->info("Window Initialized");
+    m_logger->trace("Window Initialized");
     return true;
 }
 

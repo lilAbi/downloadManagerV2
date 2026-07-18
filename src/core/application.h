@@ -25,7 +25,7 @@ public:
 
 private:
     //event loop
-    void handle_sdl_event(SDL_Event& event);
+    void handle_sdl_event(const SDL_Event& event);
 
 private:
     Logger*             m_logger                = &Logger::get();
