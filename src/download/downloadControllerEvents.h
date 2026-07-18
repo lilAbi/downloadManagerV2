@@ -11,3 +11,7 @@ struct DownloadSubmitEvent final : public Event{
     std::filesystem::path   m_downloaded_path{"~/Downloads/"};
     ~DownloadSubmitEvent() override = default;
 };
+
+struct StopDownloaderThreadEvent final : public Event{
+    ~StopDownloaderThreadEvent() override = default;
+};
