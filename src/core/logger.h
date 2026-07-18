@@ -13,25 +13,32 @@
 #include <spdlog/spdlog.h>
 
 class Logger {
-    using clock_t = std::chrono::high_resolution_clock;
 public:
     static Logger& get();
 
     template <typename... TArgs>
+    void trace(fmt::format_string<TArgs...> format_str, TArgs&&... args) {
+        m_default_logger->trace(format_str, std::forward<TArgs>(args)...);
+    }
+
+    template <typename... TArgs>
     void info(fmt::format_string<TArgs...> format_str, TArgs&&... args) {
-        m_logger->info(format_str, std::forward<TArgs>(args)...);
+        m_default_logger->info(format_str, std::forward<TArgs>(args)...);
     }
 
     template <typename... TArgs>
     void debug(fmt::format_string<TArgs...> format_str, TArgs&&... args) {
-        m_logger->debug(format_str, std::forward<TArgs>(args)...);
+        m_default_logger->debug(format_str, std::forward<TArgs>(args)...);
     }
 
     template <typename... TArgs>
     void critical(fmt::format_string<TArgs...> format_str, TArgs&&... args) {
-        m_logger->critical(format_str, std::forward<TArgs>(args)...);
+        m_default_logger->critical(format_str, std::forward<TArgs>(args)...);
     }
 
+    std::shared_ptr<spdlog::logger> get_downloader_logger() {
+        return m_download_thread_logger;
+    }
 
     Logger(const Logger&) = delete;
     Logger(Logger&&) = delete;
@@ -42,13 +49,11 @@ private:
     ~Logger();
     Logger();
 
-    void stop_logging();
+    void stop_logging() const;
 
     void init_loggers();
 
 private:
-    std::unique_ptr<spdlog::logger> m_logger{ nullptr };
-    std::atomic<bool>               m_stop{ false };
-    std::atomic<uint32_t>           m_line_num{ 0 };
-    const clock_t::time_point       m_start_time{ clock_t::now() };
+    std::unique_ptr<spdlog::logger> m_default_logger{ nullptr };
+    std::shared_ptr<spdlog::logger> m_download_thread_logger{ nullptr };
 };
