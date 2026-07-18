@@ -5,7 +5,7 @@
 #include <curl/curl.h>
 
 enum class DownloadState {
-    DOWNLOAD_ERROR = 0,
+    DEFAULT = 0,
     CREATED,
     QUEUED,
     PROBING,
@@ -19,7 +19,7 @@ enum class DownloadState {
 };
 
 enum class DownloadCommand {
-    DOWNLOAD_ERROR = 0,
+    DEFAULT = 0,
     SUBMIT,
     PAUSE,
     RESUME,
@@ -27,16 +27,15 @@ enum class DownloadCommand {
 };
 
 struct Command {
-    DownloadCommand         m_download_command{DownloadCommand::DOWNLOAD_ERROR};
-    int             m_id{};
+    DownloadCommand m_download_command{DownloadCommand::DEFAULT};
+    int             m_id{-1};
 };
-
 
 struct DownloadSpecification {
     std::string             m_source;
     std::filesystem::path   m_downloaded_path;
     CURL*                   m_handle{nullptr};
-    DownloadState           m_download_state{DownloadState::DOWNLOAD_ERROR};
+    DownloadState           m_download_state{DownloadState::DEFAULT};
 };
 
 struct DownloadSnapshot {
