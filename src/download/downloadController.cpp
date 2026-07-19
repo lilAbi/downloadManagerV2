@@ -25,6 +25,11 @@ int DownloadController::submit(DownloadSpecification download_spec) {
         m_logger->info("DownloadID added: {}", new_download_id);
         //submit download added command
         m_command_queue.push({DownloadCommand::SUBMIT, new_download_id});
+        {   //wake up downloader thread
+            std::lock_guard<std::mutex> lock_guard(g_wake_downloader_thread_mutex);
+            g_wake_downloader_thread_flag = true;
+        }
+        g_wake_downloader_thread_cv.notify_all();
     }
     return new_download_id;
 }

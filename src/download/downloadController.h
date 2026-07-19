@@ -2,11 +2,8 @@
 
 #include "downloadMetadata.h"
 #include "downloadControllerEvents.h"
-
 #include "core/logger.h"
-
 #include <boost/lockfree/queue.hpp>
-
 
 class DownloadController {
 public:
