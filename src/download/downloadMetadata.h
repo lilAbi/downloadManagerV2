@@ -1,10 +1,16 @@
 #pragma once
 
-#include <string>
 #include <filesystem>
 #include <fstream>
-#include <boost/url.hpp>
+#include <mutex>
+#include <string>
 #include <curl/curl.h>
+
+//todo: find a better way to do this maybe?
+//wakeup downloader thread from sleep
+inline std::mutex               g_wake_downloader_thread_mutex;
+inline std::condition_variable  g_wake_downloader_thread_cv;
+inline std::atomic<bool>        g_wake_downloader_thread_flag{true};
 
 enum class DownloadState {
     DEFAULT = 0,
