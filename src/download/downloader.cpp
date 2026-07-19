@@ -1,6 +1,7 @@
 #include "downloader.h"
 
-Downloader::Downloader(boost::lockfree::queue<Command>* queue, std::flat_map<int, DownloadSpecification>* transfers) : m_command_queue(queue), m_transfers(transfers) {
+Downloader::Downloader(boost::lockfree::queue<Command>* queue, std::flat_map<int, DownloadSpecification>* transfers)
+    : m_command_queue(queue), m_transfers(transfers) {
     m_logger->trace("Downloader Thread Initialized: {}", fmt::ptr(this));
     m_multi_handle = curl_multi_init();
 }
@@ -23,23 +24,13 @@ Downloader::Downloader(Downloader&& obj) noexcept {
 void Downloader::operator()(const std::stop_token& stop_token) {
     m_logger->trace("Starting Downloader thread...");
     while (!stop_token.stop_requested()) {
-        sleep(1);
-        m_logger->info("Downloader Thread Awake");
-
-        int still_running = -1;
-
+        //sleep(1);
         this->process_command_queue();
+        int still_running = -1;
 
         if (const CURLMcode perform_result = curl_multi_perform(m_multi_handle, &still_running); perform_result != CURLM_OK) {
             m_logger->critical("curl_multi_perform() error");
             continue;
-        }
-
-        if (still_running == 0) {
-            m_logger->info("No running transfers...");
-            continue;
-        } else {
-            m_logger->info("There are {} transfers ongoing...", still_running);
         }
 
         CURLMsg* curl_msg       = nullptr;
@@ -54,8 +45,17 @@ void Downloader::operator()(const std::stop_token& stop_token) {
                 m_logger->info("Download Completed");
             }
         } while (curl_msg);
-    }
 
+        if (still_running == 0) {
+            m_logger->info("No running transfers...");
+            m_logger->info("Putting Downloader thread to sleep...");
+            //put the thread to sleep since no more transfer are needed
+            g_wake_downloader_thread_flag = false;
+            continue;
+        } else {
+            m_logger->info("There are {} transfers ongoing...", still_running);
+        }
+    }
     //todo: maybe have the downloader controller own this due to crashing in the deconstructor
     if (const CURLMcode cleanup_result{curl_multi_cleanup(m_multi_handle)}; cleanup_result != CURLM_OK) {
         m_logger->critical("curl_multi_cleanup() cleanup error");
@@ -64,6 +64,15 @@ void Downloader::operator()(const std::stop_token& stop_token) {
 }
 
 void Downloader::process_command_queue() {
+    //wake up thread when flag is enabled and queue
+    std::unique_lock<std::mutex> unique_lock(g_wake_downloader_thread_mutex);
+    g_wake_downloader_thread_cv.wait(
+        unique_lock,
+        []{return g_wake_downloader_thread_flag.load();}
+    );
+    unique_lock.unlock();
+    m_logger->info("Downloader Thread Awake");
+    //process commands in the command queue
     while (!m_command_queue->empty()) {
         Command command;
         if (auto is_popped = m_command_queue->pop(command)) {
@@ -134,7 +143,6 @@ size_t Downloader::downloader_write_to_file_cb(char* ptr, size_t size, size_t nm
     const size_t bytes = size * nmemb;
     if (auto* file_handle = static_cast<std::fstream*>(userdata); file_handle->is_open()) {
         file_handle->write(ptr, bytes);
-        Logger::get().get_downloader_logger()->info("downloader_write_to_file_cb wrote {} bytes", bytes);
     } else {
         Logger::get().get_downloader_logger()->critical("FILE NOT OPEN IN downloader_write_to_file_cb");
     }

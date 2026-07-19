@@ -2,9 +2,9 @@
 
 #include "downloadMetadata.h"
 #include "core/logger.h"
-#include <curl/multi.h>
 #include <flat_map>
 #include <boost/lockfree/queue.hpp>
+#include <curl/multi.h>
 
 //this should one be passed to a thread
 /*
@@ -13,7 +13,8 @@
  *  stored in a vector
  *
  *  use an event queue to communicate between DownloadController and thread for new task or pauses/cancels
- *
+ *  todo:
+ *  1. When attempting to shut down app, the thread is asleep and wont do a clean shutdown
  */
 //todo: maybe use std::ref instead of pointers
 class Downloader {
