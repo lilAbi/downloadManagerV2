@@ -2,6 +2,8 @@
 
 #include <string>
 #include <filesystem>
+#include <fstream>
+#include <boost/url.hpp>
 #include <curl/curl.h>
 
 enum class DownloadState {
@@ -32,10 +34,11 @@ struct Command {
 };
 
 struct DownloadSpecification {
+    CURL*                   m_handle{nullptr};
     std::string             m_source;
     std::filesystem::path   m_downloaded_path;
-    CURL*                   m_handle{nullptr};
     DownloadState           m_download_state{DownloadState::DEFAULT};
+    std::fstream            m_file;
 };
 
 struct DownloadSnapshot {
