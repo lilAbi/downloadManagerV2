@@ -159,13 +159,16 @@ void UI::draw_add_download_window() {
     //draw "Address:" label
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Address:"); ImGui::SameLine();
     //draw input text line
-    ImGui::InputText("##Address", &m_shared_ui_window_data.m_source, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue);  ImGui::SameLine();
+    ImGui::InputText("##Address", &m_shared_ui_window_data.m_source, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue);
+    //draw "Output:" label
+    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Output:"); ImGui::SameLine();
+    ImGui::InputText("##Output", &m_shared_ui_window_data.m_output, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue);  ImGui::SameLine();
     if ( ImGui::Button("Start", ImVec2(-FLT_MIN,0)) ) {
         //submit a DownloadSubmit event
         if (!m_shared_ui_window_data.m_source.empty()) {
             m_event_manager->publish(std::make_shared<DownloadSubmitEvent>(
                 std::move(m_shared_ui_window_data.m_source),
-                "~/Downloads/"
+                "/Users/abi/Downloads/" + m_shared_ui_window_data.m_output
             ));
             m_shared_ui_window_data.m_source.clear();
         }
