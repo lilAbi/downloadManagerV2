@@ -23,9 +23,9 @@ int DownloadController::submit(DownloadSpecification download_spec) {
     //add it to the transfer list
     if (auto [position, isAdded] = m_transfers.try_emplace(new_download_id, std::move(download_spec)); isAdded) {
         m_logger->info("DownloadID added: {}", new_download_id);
+        //submit download added command
+        m_command_queue.push({DownloadCommand::SUBMIT, new_download_id});
     }
-    //submit download added command
-    m_command_queue.push({DownloadCommand::SUBMIT, new_download_id});
     return new_download_id;
 }
 
@@ -52,10 +52,10 @@ void DownloadController::on_download_submit_event(std::shared_ptr<DownloadSubmit
     //create a new DownloadSpecification obj from incoming event and pass it to be submitted
     this->submit(
         DownloadSpecification{
+            nullptr,
             std::move(event->m_source),
             std::move(event->m_downloaded_path),
-            nullptr,
-            DownloadState::CREATED
+            DownloadState::CREATED,
         }
     );
 }

@@ -31,14 +31,12 @@ public:
     void operator()(const std::stop_token& stop_token);
 
 private:
-
     void process_command_queue();
-
-    void process_completions();
-
-    void cleanup_active_downloads();
-
     void process_submit_command(int download_id);
+
+    void prepare_download_location(DownloadSpecification& download_specification);
+
+    static size_t downloader_write_to_file_cb(char *ptr, size_t size, size_t nmemb, void *userdata);
 
 private:
     std::shared_ptr<spdlog::logger>             m_logger = Logger::get().get_downloader_logger();
