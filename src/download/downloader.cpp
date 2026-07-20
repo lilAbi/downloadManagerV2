@@ -131,7 +131,7 @@ void Downloader::prepare_download_location(DownloadSpecification& download_speci
         //open a new file to be written to
         download_specification.m_file = std::move(std::fstream(
             download_specification.m_downloaded_path,
-            std::ios_base::out | std::ios_base::app
+            std::ios_base::out | std::ios_base::app //| std::ios_base::trunc
         ));
     } else {
         m_logger->critical("Submitted file to be download already opened...");

@@ -34,6 +34,8 @@ private:
 
     void on_stop_downloader_thread_event(std::shared_ptr<StopDownloaderThreadEvent> event);
 
+    void wake_downloader_thread();
+
 private:
     //UUID for unique download operations
     inline static int                           m_download_id_counter = 0;
