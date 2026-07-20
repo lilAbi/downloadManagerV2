@@ -24,7 +24,8 @@ Downloader::Downloader(Downloader&& obj) noexcept {
 void Downloader::operator()(const std::stop_token& stop_token) {
     m_logger->trace("Starting Downloader thread...");
     while (!stop_token.stop_requested()) {
-        //sleep(1);
+        this->wait_for_work();
+        m_logger->info("Downloader Thread Awake");
         this->process_command_queue();
         int still_running = -1;
 
@@ -33,7 +34,7 @@ void Downloader::operator()(const std::stop_token& stop_token) {
             continue;
         }
 
-        CURLMsg* curl_msg       = nullptr;
+        const CURLMsg* curl_msg = nullptr;
         int messages_in_queue   = 0;
         do {
             curl_msg = curl_multi_info_read(m_multi_handle, &messages_in_queue);
@@ -63,7 +64,7 @@ void Downloader::operator()(const std::stop_token& stop_token) {
     m_logger->trace("Stopping Downloader thread...");
 }
 
-void Downloader::process_command_queue() {
+void Downloader::wait_for_work() {
     //wake up thread when flag is enabled and queue
     std::unique_lock<std::mutex> unique_lock(g_wake_downloader_thread_mutex);
     g_wake_downloader_thread_cv.wait(
@@ -71,7 +72,9 @@ void Downloader::process_command_queue() {
         []{return g_wake_downloader_thread_flag.load();}
     );
     unique_lock.unlock();
-    m_logger->info("Downloader Thread Awake");
+}
+
+void Downloader::process_command_queue() {
     //process commands in the command queue
     while (!m_command_queue->empty()) {
         Command command;

@@ -6,6 +6,13 @@
 #include <boost/lockfree/queue.hpp>
 #include <curl/multi.h>
 
+//todo: find a better way to do this maybe?
+//wakeup downloader thread from sleep
+inline std::mutex               g_wake_downloader_thread_mutex;
+inline std::condition_variable  g_wake_downloader_thread_cv;
+inline std::atomic<bool>        g_wake_downloader_thread_flag{true};
+
+
 //this should one be passed to a thread
 /*
  *  ideally this would be a function object that i can pass to a thread
@@ -17,6 +24,7 @@
  *  1. When attempting to shut down app, the thread is asleep and wont do a clean shutdown
  */
 //todo: maybe use std::ref instead of pointers
+
 class Downloader {
 public:
     Downloader() = delete;
@@ -32,9 +40,13 @@ public:
     void operator()(const std::stop_token& stop_token);
 
 private:
+    //
+    void wait_for_work();
+    //process all commands in queue upon run & dispatch work
     void process_command_queue();
+    //handle the "submit" command case
     void process_submit_command(int download_id);
-
+    //open a file to be written to
     void prepare_download_location(DownloadSpecification& download_specification);
 
     static size_t downloader_write_to_file_cb(char *ptr, size_t size, size_t nmemb, void *userdata);
