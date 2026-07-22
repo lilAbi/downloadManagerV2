@@ -1,9 +1,12 @@
 #include "downloader.h"
 
-Downloader::Downloader(boost::lockfree::queue<Command>* queue, std::flat_map<int, DownloadSpecification>* transfers)
-    : m_command_queue(queue), m_transfers(transfers) {
-    m_logger->trace("Downloader Thread Initialized: {}", fmt::ptr(this));
+Downloader::Downloader() {
+    if(const CURLcode result = curl_global_init(CURL_GLOBAL_DEFAULT); result != CURLE_OK) {
+        m_logger->critical("ERROR: curl_global_init() init failed");
+    }
+    m_logger->trace("LIBCURL Initialized");
     m_multi_handle = curl_multi_init();
+    m_logger->trace("Downloader Thread Initialized: {}", fmt::ptr(this));
 }
 
 Downloader::~Downloader() {
@@ -13,132 +16,109 @@ Downloader::~Downloader() {
     }
 }
 
-Downloader::Downloader(Downloader&& obj) noexcept {
-    m_logger->trace("Downloader Thread Move Initialized: {}", fmt::ptr(this));
-    this->m_command_queue   = obj.m_command_queue;
-    this->m_transfers       = obj.m_transfers;
-    this->m_multi_handle    = obj.m_multi_handle;
-    obj.m_multi_handle      = nullptr;
-}
-
-void Downloader::operator()(const std::stop_token& stop_token) {
+void Downloader::operator()(std::stop_token stop_token) {
     m_logger->trace("Starting Downloader thread...");
     while (!stop_token.stop_requested()) {
-        this->wait_for_work();
         m_logger->info("Downloader Thread Awake");
-        this->process_command_queue();
-        int still_running = -1;
 
+        //execute all commands in queue
+        this->process_commands();
+
+        int still_running = 0;
         if (const CURLMcode perform_result = curl_multi_perform(m_multi_handle, &still_running); perform_result != CURLM_OK) {
-            m_logger->critical("curl_multi_perform() error");
+            m_logger->error("curl_multi_perform() error");
             continue;
         }
 
-        const CURLMsg* curl_msg = nullptr;
-        int messages_in_queue   = 0;
-        do {
-            curl_msg = curl_multi_info_read(m_multi_handle, &messages_in_queue);
-            if(curl_msg && (curl_msg->msg == CURLMSG_DONE)) {
-                CURL* easy_handle = curl_msg->easy_handle;
-                /* curl_msg->data.result holds the error code for the transfer */
-                curl_multi_remove_handle(m_multi_handle, easy_handle);
-                curl_easy_cleanup(easy_handle);
-                m_logger->info("Download Completed");
+        //process_completions();
+
+        if (stop_token.stop_requested()) break;
+
+        //if there are still running transfers then
+        if (still_running > 0) {
+            int ready = 0;
+            //Block until a network event OR curl_multi_wakeup() wakes up blocking function
+            if (const CURLMcode poll_result = curl_multi_poll(m_multi_handle, nullptr, 0, 10'000, &ready); poll_result != CURLM_OK) {
+                m_logger->error("curl_multi_poll failed");
             }
-        } while (curl_msg);
-
-        if (still_running == 0) {
-            m_logger->info("No running transfers...");
-            m_logger->info("Putting Downloader thread to sleep...");
-            //put the thread to sleep since no more transfer are needed
-            g_wake_downloader_thread_flag = false;
             continue;
-        } else {
-            m_logger->info("There are {} transfers ongoing...", still_running);
         }
+
+        //pause download thread until work or stop request
+        m_logger->info("Blocking Downloader Thread");
+        m_command_queue.wait(stop_token);
     }
-    //todo: maybe have the downloader controller own this due to crashing in the deconstructor
-    if (const CURLMcode cleanup_result{curl_multi_cleanup(m_multi_handle)}; cleanup_result != CURLM_OK) {
-        m_logger->critical("curl_multi_cleanup() cleanup error");
-    }
-    m_logger->trace("Stopping Downloader thread...");
 }
 
-void Downloader::wait_for_work() {
-    //wake up thread when flag is enabled and queue
-    std::unique_lock<std::mutex> unique_lock(g_wake_downloader_thread_mutex);
-    g_wake_downloader_thread_cv.wait(
-        unique_lock,
-        []{return g_wake_downloader_thread_flag.load();}
+void Downloader::submit_download_command(int download_id, DownloadSpecification download_specification) {
+    //submit a "command" which is a lamda that calls an internal member function with specified arguments
+    this->post(
+        [this, download_id, download_spec = std::move(download_specification)]() mutable {
+            this->process_submit_command(download_id, download_spec);
+        }
     );
-    unique_lock.unlock();
 }
 
-void Downloader::process_command_queue() {
-    //process commands in the command queue
-    while (!m_command_queue->empty()) {
-        Command command;
-        if (auto is_popped = m_command_queue->pop(command)) {
-            switch (command.m_download_command) {
-                case DownloadCommand::DEFAULT:
-                    m_logger->critical("Unknown Download Command");
-                    break;
-                case DownloadCommand::SUBMIT:
-                    m_logger->info("SUBMIT Download Command");
-                    this->process_submit_command(command.m_id);
-                    break;
-                case DownloadCommand::PAUSE:
-                    m_logger->info("PAUSE Download Command");
-                    break;
-                case DownloadCommand::RESUME:
-                    m_logger->info("RESUME Download Command");
-                    break;
-                case DownloadCommand::CANCEL:
-                    m_logger->info("CANCEL Download Command");
-                    break;
-                default:
-                    m_logger->critical("Unknown Download Command");
-                    break;
+void Downloader::process_commands() {
+    //passing a lamda function instructing how we want to be able to execute "commands" from the command queue
+    m_command_queue.drain(
+        [this](std::move_only_function<void()>& command) {
+            try {
+                command();
+            } catch (const std::exception& exception) {
+                m_logger->critical( "Unhandled exception while processing reactor command: {}", exception.what() );
+            } catch (...) {
+                m_logger->critical("Unknown exception while processing reactor command");
             }
         }
-    }
-    m_logger->trace("Finished Processing Command Queue");
+    );
 }
 
-void Downloader::process_submit_command(int download_id) {
-    //todo: might not be thread safe
-    if ( m_transfers->contains(download_id) ) {
-        auto& download_spec =  m_transfers->at(download_id);
-        //open the file handle
-        this->prepare_download_location(download_spec);
-        //initialize an easy handle
-        download_spec.m_handle = curl_easy_init();
-        //set the source of download item
-        curl_easy_setopt(download_spec.m_handle, CURLOPT_URL, download_spec.m_source.c_str());
-        //enable verbose logging
-        curl_easy_setopt(download_spec.m_handle, CURLOPT_VERBOSE, 1L);
-        //set the write callback function to write the received data to a file
-        curl_easy_setopt(download_spec.m_handle, CURLOPT_WRITEFUNCTION, &Downloader::downloader_write_to_file_cb);
-        //pass the File handle to the callback function
-        curl_easy_setopt(download_spec.m_handle, CURLOPT_WRITEDATA, &download_spec.m_file);
-        //add easy handle to initiate download
-        curl_multi_add_handle(m_multi_handle, download_spec.m_handle);
+void Downloader::process_submit_command(const int download_id, const DownloadSpecification& download_specification) {
+    if (!m_active_transfers.contains(download_id)) {
+        //new transfer
+        ActiveTransfer new_transfer{ .m_download_id = download_id };
+        //setup output file to selected download location
+        this->prepare_download_location(new_transfer, download_specification);
+        //initialize the curl handle and setup easy options
+        this->setup_easy_handle(new_transfer, download_specification);
+        //associate a easy_handle with a download id
+        m_handle_to_download_id.try_emplace(new_transfer.m_handle, download_id);
+        //associate a download id with its transfer metadata
+        m_active_transfers.try_emplace(download_id, std::move(new_transfer));
     } else {
-        m_logger->critical("Download ID not found");
+        m_logger->critical("Download ID already exist");
     }
 }
 
-void Downloader::prepare_download_location(DownloadSpecification& download_specification) {
+void Downloader::prepare_download_location(ActiveTransfer& active_transfer, const DownloadSpecification& download_specification) {
     //check if file already been opened
-    if (!download_specification.m_file.is_open()) {
+    if (!active_transfer.m_file.is_open()) {
         //open a new file to be written to
-        download_specification.m_file = std::move(std::fstream(
-            download_specification.m_downloaded_path,
-            std::ios_base::out | std::ios_base::app //| std::ios_base::trunc
-        ));
+        active_transfer.m_file = std::move( std::fstream(download_specification.m_downloaded_path, std::ios_base::out | std::ios_base::app) );
     } else {
         m_logger->critical("Submitted file to be download already opened...");
     }
+}
+
+void Downloader::setup_easy_handle(ActiveTransfer& active_transfer, const DownloadSpecification& download_specification) {
+    if (!active_transfer.m_handle) {
+        //initialize an easy handle
+        active_transfer.m_handle = curl_easy_init();
+        //set the source of download item
+        curl_easy_setopt(active_transfer.m_handle, CURLOPT_URL, download_specification.m_source.c_str());
+        //enable verbose logging
+        curl_easy_setopt(active_transfer.m_handle, CURLOPT_VERBOSE, 1L);
+        //set the write callback function to write the received data to a file
+        curl_easy_setopt(active_transfer.m_handle, CURLOPT_WRITEFUNCTION, &Downloader::downloader_write_to_file_cb);
+        //pass the File handle to the callback function
+        curl_easy_setopt(active_transfer.m_handle, CURLOPT_WRITEDATA, &active_transfer.m_file);
+        //add easy handle to initiate download
+        curl_multi_add_handle(m_multi_handle, active_transfer.m_handle);
+    } else {
+        m_logger->critical("libcurl easy handle already initialized");
+    }
+
 }
 
 size_t Downloader::downloader_write_to_file_cb(char* ptr, size_t size, size_t nmemb, void* userdata) {
