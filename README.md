@@ -4,8 +4,11 @@
 
 ## 0. TODO
 
-* add downloading logic
 * add filesystem navigator
+* Make reactor shutdown and libcurl lifetime fully RAII-safe. 
+* Implement completion/error/state handling. 
+* Fix EventManager callback locking and subscriber lifetimes. 
+* Then implement pause/resume/progress and eventually the scheduler/persistence layers.
 
 ---
 
