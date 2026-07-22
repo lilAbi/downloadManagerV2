@@ -5,6 +5,7 @@
 ## 0. TODO
 
 * add filesystem navigator
+* Make Adding new downloads to the active_transfer list safe when adding new downloads while original ones are still ongoing
 * Make reactor shutdown and libcurl lifetime fully RAII-safe. 
 * Implement completion/error/state handling. 
 * Fix EventManager callback locking and subscriber lifetimes. 
