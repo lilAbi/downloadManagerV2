@@ -1,5 +1,4 @@
 #include "downloadController.h"
-
 #include "downloader.h"
 #include "event/eventManager.h"
 
@@ -10,23 +9,17 @@ bool DownloadController::init() {
     event_manager.subscribe(this, &DownloadController::on_download_submit_event);
     event_manager.subscribe(this, &DownloadController::on_stop_downloader_thread_event);
 
-    //start downloader thread, copy constructed
-    m_downloader_thread = std::jthread(Downloader{&m_command_queue, &m_transfers});
+    //start downloader thread, move constructed
+    //m_downloader_thread = std::jthread(Downloader{&m_command_queue, &m_transfers});
+    m_downloader_thread = std::jthread(&Downloader::operator(), &m_downloader);
 
     m_logger->trace("DownloadController Initialized");
     return true;
 }
 
-int DownloadController::submit(DownloadSpecification download_spec) {
-    //create new uuid for download
+int DownloadController::submit(DownloadSpecification download_specification) {
     const int new_download_id = DownloadController::m_download_id_counter++;
-    //add it to the transfer list
-    if (auto [position, isAdded] = m_transfers.try_emplace(new_download_id, std::move(download_spec)); isAdded) {
-        m_logger->info("DownloadID added: {}", new_download_id);
-        //submit download added command
-        m_command_queue.push({DownloadCommand::SUBMIT, new_download_id});
-        this->wake_downloader_thread();
-    }
+    m_downloader.submit_download_command(new_download_id, std::move(download_specification));
     return new_download_id;
 }
 
@@ -53,10 +46,8 @@ void DownloadController::on_download_submit_event(std::shared_ptr<DownloadSubmit
     //create a new DownloadSpecification obj from incoming event and pass it to be submitted
     this->submit(
         DownloadSpecification{
-            nullptr,
-            std::move(event->m_source),
-            std::move(event->m_downloaded_path),
-            DownloadState::CREATED,
+            .m_source = std::move(event->m_source),
+            .m_downloaded_path = std::move(event->m_downloaded_path),
         }
     );
 }
@@ -64,16 +55,7 @@ void DownloadController::on_download_submit_event(std::shared_ptr<DownloadSubmit
 void DownloadController::on_stop_downloader_thread_event(std::shared_ptr<StopDownloaderThreadEvent> event) {
     m_logger->info("StopDownloaderThreadEvent has been called");
     m_downloader_thread.request_stop();
-    this->wake_downloader_thread();
     //block until downloader thread joins
     m_downloader_thread.join();
-    m_logger->trace("Downloader Thread Joined");
-}
-
-void DownloadController::wake_downloader_thread() {
-    {   //wake up downloader thread
-        std::lock_guard<std::mutex> lock_guard(g_wake_downloader_thread_mutex);
-        g_wake_downloader_thread_flag = true;
-    }
-    g_wake_downloader_thread_cv.notify_all();
+    m_logger->info("Downloader Thread Joined");
 }

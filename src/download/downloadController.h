@@ -5,6 +5,8 @@
 #include "core/logger.h"
 #include <boost/lockfree/queue.hpp>
 
+#include "downloader.h"
+
 class DownloadController {
 public:
     DownloadController() = default;
@@ -18,7 +20,7 @@ public:
     //initialize the subsystems
     bool init();
     //submit a download
-    int submit(DownloadSpecification download_spec);
+    int submit(DownloadSpecification download_specification);
     //pause a download
     void pause(int download_id);
     //resume a download from being stopped
@@ -31,20 +33,15 @@ public:
 private:
     //callback function to be invoked from ui manager
     void on_download_submit_event(std::shared_ptr<DownloadSubmitEvent> event);
-
     void on_stop_downloader_thread_event(std::shared_ptr<StopDownloaderThreadEvent> event);
-
-    void wake_downloader_thread();
 
 private:
     //UUID for unique download operations
     inline static int                           m_download_id_counter = 0;
     //Logger
     Logger*                                     m_logger = &Logger::get();
-    //Shared Command queue
-    boost::lockfree::queue<Command>             m_command_queue{0};
-    //keep track of all transfers that occurred during the lifetime of application
-    std::flat_map<int, DownloadSpecification>   m_transfers;
-    //Downloader Thread
+    //hold downloader thread
     std::jthread                                m_downloader_thread;
+    //functor used to manage the "downloader" aspect
+    Downloader                                  m_downloader;
 };
