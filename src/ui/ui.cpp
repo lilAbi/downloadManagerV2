@@ -165,6 +165,7 @@ void UI::draw_add_download_window() {
     ImGui::InputText("##Output", &m_shared_ui_window_data.m_output, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue);  ImGui::SameLine();
     if ( ImGui::Button("Start", ImVec2(-FLT_MIN,0)) ) {
         //submit a DownloadSubmit event
+        //todo: find a better way to accept user input and submit to downloadController
         if (!m_shared_ui_window_data.m_source.empty()) {
             m_event_manager->publish(std::make_shared<DownloadSubmitEvent>(
                 std::move(m_shared_ui_window_data.m_source),

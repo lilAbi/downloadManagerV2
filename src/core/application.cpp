@@ -12,15 +12,10 @@ Application::~Application() {
     ImGui::DestroyContext();
     //gets called first before the window wrapper but ultimately doesnt matter
     SDL_Quit();
+    m_logger->trace("Finished cleaning up application...");
 }
 
 bool Application::init() {
-    if(const CURLcode result = curl_global_init(CURL_GLOBAL_DEFAULT); result != CURLE_OK) {
-        m_logger->critical("ERROR: curl_global_init() init failed");
-        return false;
-    }
-    m_logger->trace("CURL Initialized");
-
     //initialize SDL application
     SDL_SetAppMetadata("downloadManagerV2", "0.1.0", "com.downloadManagerV2");
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD)) {
