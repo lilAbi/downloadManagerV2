@@ -19,34 +19,27 @@ enum class DownloadState {
     CANCELED
 };
 
-enum class DownloadCommand {
-    DEFAULT = 0,
-    SUBMIT,
-    PAUSE,
-    RESUME,
-    CANCEL
-};
-
-struct Command {
-    DownloadCommand m_download_command{DownloadCommand::DEFAULT};
-    int             m_id{-1};
-};
-
+//metadata needed to perform a single download
 struct DownloadSpecification {
-    CURL*                   m_handle{nullptr};
     std::string             m_source;
     std::filesystem::path   m_downloaded_path;
-    DownloadState           m_download_state{DownloadState::DEFAULT};
-    std::fstream            m_file;
+    //future additions
+    //Protocol  m_type;
 };
 
+//metadata representing the state of an active single transfer
 struct DownloadSnapshot {
     int             m_id;
     DownloadState   m_download_state;
     int             m_bytes_download;
     int             m_bytes_total;
     double          m_download_speed;
-    //std::string   m_status_text;
-    //todo: maybe keep track of time left?
 };
 
+//metadata needed to manage an active single transfer
+struct ActiveTransfer {
+    int             m_download_id{-1};
+    CURL*           m_handle{nullptr};
+    std::fstream    m_file{};
+    DownloadState   m_state{DownloadState::DEFAULT};
+};
