@@ -76,16 +76,17 @@ void Downloader::process_commands() {
 
 void Downloader::process_submit_command(const int download_id, const DownloadSpecification& download_specification) {
     if (!m_active_transfers.contains(download_id)) {
-        //new transfer
-        ActiveTransfer new_transfer{ .m_download_id = download_id };
-        //setup output file to selected download location
-        this->prepare_download_location(new_transfer, download_specification);
-        //initialize the curl handle and setup easy options
-        this->setup_easy_handle(new_transfer, download_specification);
-        //associate a easy_handle with a download id
-        m_handle_to_download_id.try_emplace(new_transfer.m_handle, download_id);
-        //associate a download id with its transfer metadata
-        m_active_transfers.try_emplace(download_id, std::move(new_transfer));
+        //associate a Download ID with its transfer metadata
+        if (auto [itr, is_added] = m_active_transfers.try_emplace(download_id, ActiveTransfer{ .m_download_id = download_id }); is_added) {
+            //setup output file to selected download location
+            this->prepare_download_location(itr->second, download_specification);
+            //initialize the curl handle and setup easy options
+            this->setup_easy_handle(itr->second, download_specification);
+            //associate a libcurl handle with a Download ID
+            m_handle_to_download_id.try_emplace(itr->second.m_handle, download_id);
+        } else {
+            m_logger->critical("New Active Transfer Insert Failed");
+        }
     } else {
         m_logger->critical("Download ID already exist");
     }
@@ -95,7 +96,7 @@ void Downloader::prepare_download_location(ActiveTransfer& active_transfer, cons
     //check if file already been opened
     if (!active_transfer.m_file.is_open()) {
         //open a new file to be written to
-        active_transfer.m_file = std::move( std::fstream(download_specification.m_downloaded_path, std::ios_base::out | std::ios_base::app) );
+        active_transfer.m_file = std::fstream(download_specification.m_downloaded_path, std::ios_base::out | std::ios_base::app);
     } else {
         m_logger->critical("Submitted file to be download already opened...");
     }
@@ -112,13 +113,13 @@ void Downloader::setup_easy_handle(ActiveTransfer& active_transfer, const Downlo
         //set the write callback function to write the received data to a file
         curl_easy_setopt(active_transfer.m_handle, CURLOPT_WRITEFUNCTION, &Downloader::downloader_write_to_file_cb);
         //pass the File handle to the callback function
+        //todo: ensure when new downloads get added, the handle ptr does not change
         curl_easy_setopt(active_transfer.m_handle, CURLOPT_WRITEDATA, &active_transfer.m_file);
         //add easy handle to initiate download
         curl_multi_add_handle(m_multi_handle, active_transfer.m_handle);
     } else {
         m_logger->critical("libcurl easy handle already initialized");
     }
-
 }
 
 size_t Downloader::downloader_write_to_file_cb(char* ptr, size_t size, size_t nmemb, void* userdata) {
