@@ -23,22 +23,19 @@ bool Application::init() {
         return false;
     }
     m_logger->trace("SDL Initialized");
-
     if (!m_window.init()) {
         m_logger->critical("Error: Window did not initialize");
+        return false;
     }
-
     if (!m_download_controller.init()) {
         m_logger->critical("Error: DownloadController did not initialize");
+        return false;
     }
-
     return true;
 }
 
 void Application::loop() {
     const ImGuiIO& io = ImGui::GetIO(); (void)io;
-
-    bool show_demo_window = true;
     while (m_is_running) {
         SDL_Event event;
 
@@ -69,7 +66,6 @@ void Application::loop() {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(m_window.get_sdl_window());
     }
-
 }
 
 void Application::handle_sdl_event(const SDL_Event& event) {
