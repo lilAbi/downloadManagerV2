@@ -10,7 +10,6 @@ bool DownloadController::init() {
     event_manager.subscribe(this, &DownloadController::on_stop_downloader_thread_event);
 
     //start downloader thread, move constructed
-    //m_downloader_thread = std::jthread(Downloader{&m_command_queue, &m_transfers});
     m_downloader_thread = std::jthread(&Downloader::operator(), &m_downloader);
 
     m_logger->trace("DownloadController Initialized");

@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <memory>
 #include <curl/curl.h>
 
 enum class DownloadState {
@@ -38,8 +39,8 @@ struct DownloadSnapshot {
 
 //metadata needed to manage an active single transfer
 struct ActiveTransfer {
-    int             m_download_id{-1};
-    CURL*           m_handle{nullptr};
-    std::fstream    m_file{};
-    DownloadState   m_state{DownloadState::DEFAULT};
+    int                     m_download_id{-1};
+    CURL*                   m_easy_handle = nullptr;
+    std::fstream            m_file{};
+    DownloadState           m_state{DownloadState::DEFAULT};
 };
