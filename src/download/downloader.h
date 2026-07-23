@@ -5,8 +5,12 @@
 #include "core/logger.h"
 #include <flat_map>
 #include <curl/multi.h>
+#include <memory>
 
 class Downloader {
+    struct CurlMultiDeleter {
+        void operator()(CURLM* handle) const noexcept { if (handle) curl_multi_cleanup(handle); }
+    };
 public:
     Downloader();
     ~Downloader();
@@ -32,6 +36,8 @@ private:
 
     //execute commands in the queue
     void process_commands();
+    //update transfer that were completed
+    void process_completions();
 
     //handle the "submit" command case
     void process_submit_command(int download_id, const DownloadSpecification& download_specification);
@@ -47,21 +53,21 @@ private:
     static size_t downloader_write_to_file_cb(char *ptr, size_t size, size_t nmemb, void *userdata);
 
 private:
-    std::shared_ptr<spdlog::logger>     m_logger = Logger::get().get_downloader_logger();
+    std::shared_ptr<spdlog::logger>             m_logger = Logger::get().get_downloader_logger();
     //handle to curls multi interface
-    CURLM*                              m_multi_handle = nullptr;
+    std::unique_ptr<CURLM, CurlMultiDeleter>    m_multi_handle = nullptr;
     //Command queue
-    CommandQueue                        m_command_queue;
+    CommandQueue                                m_command_queue;
     //keep track of ids to curl handle
-    std::unordered_map<CURL*, int>      m_handle_to_download_id;
+    std::unordered_map<CURL*, int>              m_handle_to_download_id;
     //keep track of active transfers and their state
-    std::flat_map<int, ActiveTransfer>  m_active_transfers;
+    std::flat_map<int, ActiveTransfer>          m_active_transfers;
 };
 
 template<typename Function>
 void Downloader::post(Function&& command) {
     m_command_queue.push( std::forward<Function>(command) );
-    if (m_multi_handle) curl_multi_wakeup(m_multi_handle);
+    if (m_multi_handle) curl_multi_wakeup(m_multi_handle.get());
 }
 
 
