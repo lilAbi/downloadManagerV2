@@ -6,5 +6,5 @@ EventManager& EventManager::get() {
 }
 
 EventManager::EventManager() {
-    m_logger->info("Event Manager Initialized");
+    m_logger->trace("Event Manager Initialized");
 }

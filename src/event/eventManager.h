@@ -43,17 +43,23 @@ private:
 template<typename EventType>
 requires std::derived_from<EventType, Event>
 bool EventManager::publish(std::shared_ptr<EventType> event) {
-    //prevent other threads from publishing multiple messages
-    std::lock_guard guard{m_mutex};
-    //check if EventType has an existing EventHandlerVector
-    if ( const std::type_index id = typeid(EventType); m_subscribers.contains(id) ) {
-        //iterate through all the event handlers and handle the event
-        for ( const auto& event_handler : *(m_subscribers[id]) ) {
-            if (event_handler) event_handler->call(std::static_pointer_cast<Event>(event));
+    //local event handler queue
+    EventHandlerVector handlers;
+    {   //prevent other threads from publishing multiple messages
+        std::lock_guard guard{m_mutex};
+        //check if EventType has an existing EventHandlerVector and take a local copy
+        if (const auto itr = m_subscribers.find( std::type_index{typeid(EventType)} ); itr != m_subscribers.end() ) {
+            handlers = *(itr->second);
+        } else {
+            m_logger->critical("Event's registered EventHandlerVector was not found");
+            return false;
         }
-    } else {
-        m_logger->critical("Event's registered EventHandlerVector was not found");
-        return false;
+    }
+    //iterate through all the event handlers and handle the event
+    for (const auto& event_handler : handlers) {
+        if (event_handler) {
+            event_handler->call(std::static_pointer_cast<Event>(event));
+        }
     }
     return true;
 }
