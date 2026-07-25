@@ -1,6 +1,6 @@
 #include "downloader.h"
 
-Downloader::Downloader() {
+Downloader::Downloader(ThreadSafeQueue<DownloadUpdate>& queue) : m_progress_update_queue{queue} {
     if(const CURLcode result = curl_global_init(CURL_GLOBAL_DEFAULT); result != CURLE_OK) {
         m_logger->critical("ERROR: curl_global_init() init failed");
     }
@@ -16,8 +16,6 @@ Downloader::~Downloader() {
 void Downloader::operator()(std::stop_token stop_token) {
     m_logger->trace("Starting Downloader thread...");
     while (!stop_token.stop_requested()) {
-        m_logger->info("Downloader Thread Awake");
-
         //execute all commands in queue
         this->process_commands();
 
@@ -78,14 +76,16 @@ void Downloader::process_completions() {
         curl_msg = curl_multi_info_read(m_multi_handle.get(), &messages_in_queue);
         if(curl_msg && (curl_msg->msg == CURLMSG_DONE)) {
             m_logger->trace("Download Completed");
-            CURL* easy_handle = curl_msg->easy_handle;
             //get associated download id from libcurl handle ptr
-            if (const auto itr = m_handle_to_download_id.find(easy_handle); itr != m_handle_to_download_id.end() ) {
-                auto& current_transfer = m_active_transfers[itr->second];
-                curl_multi_remove_handle(m_multi_handle.get(), current_transfer.m_easy_handle);
-                curl_easy_cleanup(current_transfer.m_easy_handle);
-                current_transfer.m_easy_handle = nullptr;
-                current_transfer.m_state = DownloadState::COMPLETED;
+            if (const auto itr = m_handle_to_download_id.find(curl_msg->easy_handle); itr != m_handle_to_download_id.end() ) {
+                //grab associated metadata and clean up curl handle
+                auto& curr_active_transfer = m_active_transfers[itr->second];
+                curl_multi_remove_handle(m_multi_handle.get(), curr_active_transfer.m_easy_handle);
+                curl_easy_cleanup(curr_active_transfer.m_easy_handle);
+                curr_active_transfer.m_easy_handle = nullptr;
+                curr_active_transfer.m_state = DownloadState::COMPLETED;
+                //update view model with completed download state
+                m_progress_update_queue.push(CompletedUpdate{curr_active_transfer.m_download_id});
                 m_logger->info("Download Marked Completed");
             }
         }
@@ -94,13 +94,18 @@ void Downloader::process_completions() {
 
 void Downloader::process_submit_command(const int download_id, const DownloadSpecification& download_specification) {
     if (!m_active_transfers.contains(download_id)) {
-        //associate a Download ID with its transfer metadata
-        if (auto [itr, is_added] = m_active_transfers.try_emplace(download_id, ActiveTransfer{ .m_download_id = download_id }); is_added) {
+        //create a new entry to associate a new Download ID with its transfer metadata
+        ActiveTransfer new_transfer{
+            .m_download_id = download_id,
+            .last_progress_publish = std::chrono::steady_clock::now(),
+            .m_progress_update_queue = &this->m_progress_update_queue
+        };
+        if (auto [itr, is_added] = m_active_transfers.try_emplace(download_id, std::move(new_transfer)); is_added) {
             //setup output file to selected download location
             this->prepare_download_location(itr->second, download_specification);
             //initialize the curl handle and setup easy options
             this->setup_easy_handle(itr->second, download_specification);
-            //associate a libcurl handle with a Download ID
+            //create a new entry to associate a libcurl handle with a Download ID
             m_handle_to_download_id.try_emplace(itr->second.m_easy_handle, download_id);
         } else {
             m_logger->critical("New Active Transfer Insert Failed");
@@ -127,12 +132,17 @@ void Downloader::setup_easy_handle(ActiveTransfer& active_transfer, const Downlo
         //set the source of download item
         curl_easy_setopt(active_transfer.m_easy_handle, CURLOPT_URL, download_specification.m_source.c_str());
         //enable verbose logging
-        curl_easy_setopt(active_transfer.m_easy_handle, CURLOPT_VERBOSE, 1L);
+        curl_easy_setopt(active_transfer.m_easy_handle, CURLOPT_VERBOSE, 0L);
+        //enable custom callback progress function
+        curl_easy_setopt(active_transfer.m_easy_handle, CURLOPT_NOPROGRESS, 0L);
         //set the write callback function to write the received data to a file
-        curl_easy_setopt(active_transfer.m_easy_handle, CURLOPT_WRITEFUNCTION, &Downloader::downloader_write_to_file_cb);
+        curl_easy_setopt(active_transfer.m_easy_handle, CURLOPT_WRITEFUNCTION, &Downloader::download_to_file_cb);
+        //set the progress update callback function
+        curl_easy_setopt(active_transfer.m_easy_handle, CURLOPT_XFERINFOFUNCTION, &Downloader::update_download_progress_cb);
         //pass the File handle to the callback function
-        //todo: ensure when new downloads get added, the handle ptr does not change
         curl_easy_setopt(active_transfer.m_easy_handle, CURLOPT_WRITEDATA, &active_transfer.m_file);
+        //pass the ActiveTransfer element to the progress callback function
+        curl_easy_setopt(active_transfer.m_easy_handle, CURLOPT_XFERINFODATA, &active_transfer);
         //add easy handle to initiate download
         curl_multi_add_handle(m_multi_handle.get(), active_transfer.m_easy_handle);
     } else {
@@ -140,7 +150,7 @@ void Downloader::setup_easy_handle(ActiveTransfer& active_transfer, const Downlo
     }
 }
 
-size_t Downloader::downloader_write_to_file_cb(char* ptr, size_t size, size_t nmemb, void* userdata) {
+size_t Downloader::download_to_file_cb(char* ptr, size_t size, size_t nmemb, void* userdata) {
     const size_t bytes = size * nmemb; ////calculate total bytes to write
     if ( auto* file_handle = static_cast<std::fstream*>(userdata); file_handle && file_handle->is_open() ) {
         file_handle->write(ptr, static_cast<std::streamsize>(bytes));
@@ -149,5 +159,23 @@ size_t Downloader::downloader_write_to_file_cb(char* ptr, size_t size, size_t nm
         return CURL_WRITEFUNC_ERROR;
     }
     return bytes;
+}
+
+size_t Downloader::update_download_progress_cb(void* userdata, curl_off_t download_total, curl_off_t downloaded_now, curl_off_t upload_total, curl_off_t uploaded_now) {
+        using namespace std::chrono_literals;
+    if (auto* active_transfer{static_cast<ActiveTransfer*>(userdata)}; active_transfer) {
+        if (const auto now = std::chrono::steady_clock::now(); now - active_transfer->last_progress_publish > 50ms) {
+            active_transfer->last_progress_publish = now;
+            //todo: possible slow down
+            active_transfer->m_progress_update_queue->push(ProgressUpdate{
+                .m_download_id = active_transfer->m_download_id,
+                .m_bytes_downloaded = static_cast<int>(downloaded_now),
+                .m_bytes_total = static_cast<int>(download_total)
+            });
+        }
+    } else {
+        return 1; // Abort transfer.
+    }
+    return 0;
 }
 
