@@ -1,5 +1,6 @@
 #pragma once
 #include "core/logger.h"
+#include "download/downloadController.h"
 #include "event/eventManager.h"
 
 //Data to be shared across different functions of the ui manager
@@ -15,8 +16,7 @@ struct UIWindowData {
 //Should own the view model
 class UI {
 public:
-    //keeps track of the download state
-    //void draw(view_model model);
+    explicit UI(DownloadController* download_controller) : m_download_controller(download_controller) {};
 
     void draw();
 
@@ -36,9 +36,10 @@ private:
     void draw_add_download_window();
 
 private:
-    inline static UIWindowData      m_shared_ui_window_data;
-    Logger*                         m_logger = &Logger::get();
-    EventManager*                   m_event_manager = &EventManager::get();
-    bool                            m_show_demo_window = false;
+    inline static UIWindowData  m_shared_ui_window_data;
+    Logger*                     m_logger = &Logger::get();
+    EventManager*               m_event_manager = &EventManager::get();
+    DownloadController*         m_download_controller = nullptr;
+    bool                        m_show_demo_window = false;
 
 };

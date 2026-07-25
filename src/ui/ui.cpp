@@ -4,7 +4,6 @@
 #include <imgui_impl_opengl3.h>
 #include <imgui_stdlib.h>
 
-
 void UI::draw() {
     //draw enabled pop up window
     this->draw_pop_up_window();
@@ -127,18 +126,23 @@ void UI::draw_filesystem_nav_panel() {
 }
 
 void UI::draw_download_list_panel() {
-    ImGui::Text("Download Metadata");
-    ImGui::Separator();
-
-    //todo: poll get all downloadids and display snapshot metadata
-
-    ImGui::Text("URL: %s", "https://example.com/file.zip");
-    ImGui::Text("File: %s", "file.zip");
-    ImGui::Text("Status: %s", "Downloading");
-    ImGui::Text("Speed: %s", "12.4 MB/s");
-    ImGui::Text("ETA: %s", "00:02:31");
-
-    ImGui::ProgressBar(0.45f, ImVec2(-1.0f, 0.0f), "45%");
+    ImGui::SeparatorText("Download List");
+    auto view_model = m_download_controller->should_draw_view_model();
+    if (view_model.first) {
+        for (auto& snapshot: *view_model.second | std::views::values) {
+            ImGui::Separator();
+            //element one
+            ImGui::Text("URL: %s", snapshot.m_source.c_str());
+            ImGui::Text("File: %s", snapshot.m_filename.c_str());
+            //todo: add other statuses to be shown
+            //ImGui::Text("Status: %s", "Downloading");
+            //ImGui::Text("Speed: %s", "12.4 MB/s");
+            //ImGui::Text("ETA: %s", "00:02:31");
+            const float download_percent = static_cast<float>(snapshot.m_bytes_downloaded)/static_cast<float>(snapshot.m_bytes_total);
+            ImGui::ProgressBar(download_percent, ImVec2(-1.0f, 0.0f), fmt::format("{:.{}f}", download_percent * 100, 0).c_str());
+            ImGui::Separator();
+        }
+    }
 }
 
 void UI::draw_add_download_window() {
