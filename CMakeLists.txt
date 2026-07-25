@@ -16,11 +16,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 set(CMAKE_CXX_MODULE_STD OFF)
 
-find_package(SDL3)
-find_package(CURL)
-find_package(spdlog)
-find_package(imgui)
-find_package(Boost)
+find_package(SDL3 REQUIRED)
+find_package(CURL REQUIRED)
+find_package(spdlog REQUIRED)
+find_package(imgui REQUIRED)
+find_package(Boost REQUIRED)
 
 
 file(GLOB_RECURSE src_files
@@ -34,7 +34,7 @@ file(GLOB_RECURSE src_files
 add_executable(downloadManagerV2 ${src_files})
 
 target_include_directories(downloadManagerV2
-        PUBLIC
+        PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/bindings
         src
 )

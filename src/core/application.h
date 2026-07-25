@@ -28,10 +28,10 @@ private:
     void handle_sdl_event(const SDL_Event& event);
 
 private:
+    DownloadController  m_download_controller;
+    UI                  m_ui{&m_download_controller};
+    Window              m_window;
     Logger*             m_logger                = &Logger::get();
     EventManager*       m_event_manager         = &EventManager::get();
-    DownloadController  m_download_controller;
-    Window              m_window;
-    UI                  m_ui;
     bool                m_is_running            = true;
 };

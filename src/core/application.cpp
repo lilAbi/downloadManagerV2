@@ -50,6 +50,9 @@ void Application::loop() {
             continue;
         }
 
+        //respond to any events queued up
+        m_download_controller.process_download_update_queue();
+
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL3_NewFrame();
